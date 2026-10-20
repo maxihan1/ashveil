@@ -47,8 +47,8 @@ QA 자동화 플랫폼(Test Hub)이 테스트할 "고객사 게임" 역할을 �
 | 종류 | 위치 | 실행 |
 |---|---|---|
 | 도메인 규칙 단위 테스트 66개 | `server/tests/Ashveil.Shared.Tests` | `server-ci` |
-| 서버 통합 테스트 36개 (실제 PostgreSQL, 동시성 포함) | `server/tests/Ashveil.Server.Tests` | `server-ci` |
-| Unity EditMode 26개 | `client/Assets/Tests/EditMode` | `unity-ci` compile-check(엔진 없이 실행) + GameCI |
+| 서버 통합 테스트 37개 (실제 PostgreSQL, 동시성·클라이언트 직렬화 계약 포함) | `server/tests/Ashveil.Server.Tests` | `server-ci` |
+| Unity EditMode 27개 | `client/Assets/Tests/EditMode` | `unity-ci` compile-check(엔진 없이 실행) + GameCI |
 | Unity PlayMode | `client/Assets/Tests/PlayMode` | GameCI |
 | AltTester 스모크 | `qa-tests/` | 폰 연결 후 `mvn test` |
 
