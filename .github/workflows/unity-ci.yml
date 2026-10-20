@@ -60,11 +60,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Unity 참조 DLL 캐시
         id: refs
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/unity-refs/${{ env.UNITY_VERSION }}
           key: unity-refs-${{ env.UNITY_VERSION }}
@@ -95,9 +95,9 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: client/Library
           key: Library-test-${{ hashFiles('client/Packages/manifest.json', 'client/ProjectSettings/**', 'shared/Package/**') }}
@@ -118,7 +118,7 @@ jobs:
           checkName: Unity 테스트 결과
           coverageEnabled: false
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: unity-test-results
@@ -144,10 +144,10 @@ jobs:
           android: true
           large-packages: false
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Boss Room 원본 캐시
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/bossroom
           key: bossroom-${{ env.BOSSROOM_COMMIT }}
@@ -161,7 +161,7 @@ jobs:
         if: matrix.variant == 'qa'
         run: python3 tools/ci/enable-alttester.py client/Packages/manifest.json 2.3.2
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: client/Library
           key: Library-android-${{ matrix.variant }}-${{ hashFiles('client/Packages/manifest.json', 'client/ProjectSettings/**') }}
@@ -194,7 +194,7 @@ jobs:
             -altPort ${{ vars.ALTTESTER_PORT || '13000' }}
             -altAppName ${{ vars.ALTTESTER_APP_NAME || 'ashveil' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Ashveil-${{ matrix.variant }}-apk
           path: build/Android
