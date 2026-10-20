@@ -1,0 +1,58 @@
+# 서버·shared 단위 테스트와 실제 PostgreSQL 통합 테스트, 서버 Docker 이미지 빌드 확인
+name: server-ci
+
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - "shared/**"
+      - ".github/workflows/server-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "shared/**"
+      - ".github/workflows/server-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: server-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      ConnectionStrings__TestAdmin: Host=localhost;Port=5432;Username=postgres;Password=postgres
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test (shared unit + server integration)
+        run: dotnet test server/Ashveil.slnx --logger "trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-test-results
+          path: TestResults
+
+      - name: Docker image build check
+        run: docker build -f server/Dockerfile -t ashveil-server:ci .
