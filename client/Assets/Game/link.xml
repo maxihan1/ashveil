@@ -1,0 +1,5 @@
+<!-- IL2CPP 코드 제거(stripping)에서 JSON 역직렬화에 쓰는 DTO·설정 타입이 빠지지 않게 보존한다 -->
+<linker>
+  <assembly fullname="Ashveil.Shared" preserve="all" />
+  <assembly fullname="Ashveil.Application" preserve="all" />
+</linker>

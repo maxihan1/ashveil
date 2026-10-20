@@ -134,7 +134,53 @@ def write_csproj(name, folders, kind, refs, opts, config):
     return len(files)
 
 
+def run_editmode_tests():
+    """EditMode 테스트 중 Unity 엔진 호출이 없는 것(Domain·Application)을 일반 .NET + NUnit 으로 실제 실행한다."""
+    sources = []
+    for folder in ["shared/Package/Runtime", "client/Assets/Game/Domain", "client/Assets/Game/Application", "client/Assets/Tests/EditMode"]:
+        sources += sorted((ROOT / folder).rglob("*.cs"))
+    managed = REFS / DATA / "Managed" / "UnityEngine"
+    refs = [managed / "UnityEngine.CoreModule.dll", managed / "UnityEngine.UnityWebRequestModule.dll", managed / "UnityEngine.dll"]
+    lines = [
+        '<Project Sdk="Microsoft.NET.Sdk">',
+        "  <PropertyGroup>",
+        "    <TargetFramework>net10.0</TargetFramework>",
+        "    <LangVersion>9.0</LangVersion>",
+        "    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>",
+        "    <Nullable>disable</Nullable>",
+        "    <IsPackable>false</IsPackable>",
+        "    <NoWarn>CS0618;CS1701;CS1702;MSB3277;NU1701;CS8632</NoWarn>",
+        "    <DefineConstants>UNITY_INCLUDE_TESTS</DefineConstants>",
+        "  </PropertyGroup>",
+        "  <ItemGroup>",
+        '    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />',
+        '    <PackageReference Include="NUnit" Version="3.14.0" />',
+        '    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />',
+        '    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />',
+    ]
+    lines += [f'    <Compile Include="{escape(str(s))}" />' for s in sources]
+    lines += [f'    <Reference Include="{d.stem}"><HintPath>{escape(str(d))}</HintPath></Reference>' for d in refs]
+    lines += ["  </ItemGroup>", "</Project>"]
+    out = WORK / "editmode-run"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "EditModeRunner.csproj").write_text("\n".join(lines), encoding="utf-8")
+    print("== editmode-run (Unity 엔진 없이 실행)", flush=True)
+    result = subprocess.run([
+        "docker", "run", "--rm",
+        "-v", f"{ROOT}:{ROOT}", "-v", f"{REFS}:{REFS}", "-v", f"{WORK}:/work",
+        "-v", "ashveil-nuget:/root/.nuget/packages",
+        "-e", "DOTNET_CLI_TELEMETRY_OPTOUT=1", "-e", "DOTNET_NOLOGO=1",
+        "mcr.microsoft.com/dotnet/sdk:10.0", "bash", "-c",
+        "cd /work/editmode-run && dotnet test -nologo -v q 2>&1 | grep -E 'error|Failed|Passed!|Failed!|Total tests' | sort -u; exit ${PIPESTATUS[0]}",
+    ])
+    if result.returncode != 0:
+        sys.exit("EditMode 테스트 실패")
+
+
 def main():
+    if sys.argv[1:] == ["editmode-run"]:
+        run_editmode_tests()
+        return
     configs = sys.argv[1:] or list(CONFIGS)
     if not (REFS / DATA / "Managed").exists():
         sys.exit(f"Unity 참조 DLL이 없습니다: {REFS}\n먼저 tools/unity-compile-check/fetch-unity-refs.sh 를 실행하세요.")
