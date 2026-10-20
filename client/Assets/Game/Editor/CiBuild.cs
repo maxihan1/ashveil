@@ -46,7 +46,8 @@ namespace Ashveil.Editor
                 {
                     Variant = (Get("buildVariant") ?? "qa").ToLowerInvariant(),
                     OutputPath = Get("customBuildPath"),
-                    ServerUrl = Get("serverUrl"),
+                    // CI 는 값이 없을 때 자리 표시자 none 을 넘긴다(빈 값이면 다음 인자가 밀려 들어오므로).
+                    ServerUrl = string.Equals(Get("serverUrl"), "none", StringComparison.OrdinalIgnoreCase) ? null : Get("serverUrl"),
                     AltHost = Get("altHost") ?? "127.0.0.1",
                     AltAppName = Get("altAppName") ?? "ashveil",
                     KeystoreName = Get("androidKeystoreName"),

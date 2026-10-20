@@ -1,0 +1,201 @@
+# Unity 클라이언트 CI: C# 컴파일 검사(라이선스 불필요) → GameCI EditMode/PlayMode 테스트 → main 머지 시 QA·Release APK 빌드
+name: unity-ci
+
+on:
+  pull_request:
+    paths:
+      - "client/**"
+      - "shared/**"
+      - "tools/**"
+      - ".github/workflows/unity-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "shared/**"
+      - "tools/**"
+      - ".github/workflows/unity-ci.yml"
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "QA·Release APK 빌드까지 실행"
+        type: boolean
+        default: true
+      serverUrl:
+        description: "빌드에 넣을 기본 서버 주소 (예: http://192.168.0.10:8080). 비우면 저장소 변수 GAME_SERVER_URL"
+        required: false
+        default: ""
+
+concurrency:
+  group: unity-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNITY_VERSION: 6000.0.84f1
+  UNITY_CHANGESET: 78ab6fc243d5
+  BOSSROOM_COMMIT: 1299ba4fc97d83b634e7d32a86c438ba668d7f9c
+
+jobs:
+  license:
+    name: Unity 라이선스 확인
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Unity 라이선스 Secret 없음::UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD 를 등록하면 Unity 테스트와 APK 빌드가 실행됩니다 (docs/ci.md)."
+          fi
+
+  compile-check:
+    name: C# 컴파일 검사 + EditMode 테스트 (Unity 없이)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unity 참조 DLL 캐시
+        id: refs
+        uses: actions/cache@v4
+        with:
+          path: .cache/unity-refs/${{ env.UNITY_VERSION }}
+          key: unity-refs-${{ env.UNITY_VERSION }}
+
+      - name: Unity 참조 DLL 추출
+        if: steps.refs.outputs.cache-hit != 'true'
+        env:
+          UNITY_REF_DIR: ${{ github.workspace }}/.cache/unity-refs/${{ env.UNITY_VERSION }}
+        run: bash tools/unity-compile-check/fetch-unity-refs.sh "$UNITY_VERSION" "$UNITY_CHANGESET"
+
+      - name: 컴파일 검사 (player-release, player-qa, editor-qa)
+        env:
+          UNITY_REF_DIR: ${{ github.workspace }}/.cache/unity-refs/${{ env.UNITY_VERSION }}
+        run: python3 tools/unity-compile-check/check.py
+
+      - name: EditMode 테스트 실행
+        env:
+          UNITY_REF_DIR: ${{ github.workspace }}/.cache/unity-refs/${{ env.UNITY_VERSION }}
+        run: python3 tools/unity-compile-check/check.py editmode-run
+
+  test:
+    name: GameCI 테스트 (EditMode + PlayMode)
+    needs: [license, compile-check]
+    if: needs.license.outputs.available == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: client/Library
+          key: Library-test-${{ hashFiles('client/Packages/manifest.json', 'client/ProjectSettings/**', 'shared/Package/**') }}
+          restore-keys: Library-test-
+
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: client
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: all
+          artifactsPath: test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity 테스트 결과
+          coverageEnabled: false
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unity-test-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  build:
+    name: Android APK (${{ matrix.variant }})
+    needs: [license, test]
+    if: >-
+      needs.license.outputs.available == 'true' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [qa, release]
+    steps:
+      - name: 러너 디스크 확보 (Unity Android 이미지 7GB+)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          large-packages: false
+
+      - uses: actions/checkout@v4
+
+      - name: Boss Room 원본 캐시
+        uses: actions/cache@v4
+        with:
+          path: .cache/bossroom
+          key: bossroom-${{ env.BOSSROOM_COMMIT }}
+
+      - name: Boss Room 아트 가져오기
+        env:
+          BOSSROOM_CACHE: ${{ github.workspace }}/.cache/bossroom
+        run: bash tools/fetch-bossroom.sh
+
+      - name: QA 빌드 전용 AltTester SDK 추가
+        if: matrix.variant == 'qa'
+        run: python3 tools/ci/enable-alttester.py client/Packages/manifest.json 2.3.2
+
+      - uses: actions/cache@v4
+        with:
+          path: client/Library
+          key: Library-android-${{ matrix.variant }}-${{ hashFiles('client/Packages/manifest.json', 'client/ProjectSettings/**') }}
+          restore-keys: Library-android-${{ matrix.variant }}-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: client
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: Android
+          androidExportType: androidPackage
+          buildName: Ashveil-${{ matrix.variant }}
+          buildMethod: Ashveil.Editor.CiBuild.BuildAndroid
+          versioning: None
+          allowDirtyBuild: true
+          androidKeystoreName: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && 'ashveil.keystore' || '' }}
+          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          customParameters: >-
+            -buildVariant ${{ matrix.variant }}
+            -buildNumber ${{ github.run_number }}
+            -serverUrl ${{ inputs.serverUrl || vars.GAME_SERVER_URL || 'none' }}
+            -altHost ${{ vars.ALTTESTER_HOST || '127.0.0.1' }}
+            -altPort ${{ vars.ALTTESTER_PORT || '13000' }}
+            -altAppName ${{ vars.ALTTESTER_APP_NAME || 'ashveil' }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ashveil-${{ matrix.variant }}-apk
+          path: build/Android
+          retention-days: 30
