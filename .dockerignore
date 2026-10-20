@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/TestResults/
+client/
+docs/
+qa-tests/
+.git/
+.github/
+.claude/
+infra/.env
