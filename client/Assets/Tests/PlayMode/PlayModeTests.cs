@@ -45,6 +45,7 @@ namespace Ashveil.Tests
         [SetUp]
         public void SetUp()
         {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
             _server = new FakeServer();
             GameContext.Initialize(new ServerSettings(UnityEngine.Application.temporaryCachePath, "{\"baseUrl\":\"http://fake.local\"}"), _server);
         }

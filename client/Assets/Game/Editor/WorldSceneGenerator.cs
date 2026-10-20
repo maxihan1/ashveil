@@ -43,7 +43,10 @@ namespace Ashveil.Editor
             camera.GetComponent<Camera>().farClipPlane = 140f;
             new GameObject("WorldRoot", typeof(WorldController));
 
-            Lightmapping.lightingSettings = new LightingSettings { bakedGI = false, realtimeGI = false };
+            // 굽기(bake) 없이 실시간 조명만 쓴다. 씬에 저장되도록 에셋으로 만든다.
+            var lighting = new LightingSettings { bakedGI = false, realtimeGI = false };
+            AssetDatabase.CreateAsset(lighting, GeneratedPaths.Terrain + "/WorldLighting.lighting");
+            Lightmapping.lightingSettings = lighting;
             EditorSceneManager.SaveScene(scene, GeneratedPaths.WorldScene);
             Debug.Log($"[Generator] World 씬 생성: 지형 {terrain.terrainData.size}, 프랍 {props.childCount}개 그룹");
         }

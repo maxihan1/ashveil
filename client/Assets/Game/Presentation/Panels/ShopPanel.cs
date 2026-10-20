@@ -27,8 +27,7 @@ namespace Ashveil.Presentation
             _list = Ui.ScrollList(Body, "ShopList", out var scroll);
             Ui.Stretch(Ui.Rect(scroll), 0, 0, 90, 0);
             GameContext.Player.InventoryChanged += Render;
-            tabs.Select(0);
-            LoadPrices();
+            tabs.Select(0); // 가격은 OpenSingle 이 부르는 Refresh 에서 받는다
         }
 
         private void OnDestroy()

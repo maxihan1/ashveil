@@ -326,8 +326,13 @@ namespace Ashveil.Presentation
             WorldServices.PositionSaver.SaveNow();
         }
 
+        /// <summary>부활 직후 보호 시간. 마을 부활 지점에서 경비병에게 바로 다시 죽는 일을 막는다.</summary>
+        public const float RespawnProtectionSeconds = 20f;
+        public float ProtectedUntil { get; private set; }
+
         public void RespawnInTown()
         {
+            ProtectedUntil = Time.time + RespawnProtectionSeconds;
             Player.RestoreVitals();
             Actor.Revive();
             SyncFromState();

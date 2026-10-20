@@ -122,6 +122,8 @@ namespace Ashveil.Presentation
                 return;
             }
 
+            // 모바일에서는 터치를 마우스로도 흉내 내므로, 마우스 탭은 에디터·PC 에서만 처리한다(중복 탭 방지).
+            if (UnityEngine.Application.isMobilePlatform) return;
             if (Input.GetMouseButtonDown(0))
             {
                 _mouseStart = Input.mousePosition;

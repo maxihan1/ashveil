@@ -32,6 +32,9 @@ namespace Ashveil.Presentation
             }
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            // 숫자 표기(1,234)와 파싱이 기기 언어 설정에 따라 달라지지 않게 고정한다(QA 자동화가 텍스트를 비교한다).
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
             UnityEngine.Application.targetFrameRate = 30;
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             if (!GameContext.IsInitialized)

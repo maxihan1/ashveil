@@ -24,9 +24,13 @@ namespace Ashveil.Presentation
         protected override void Build()
         {
             _list = Ui.ScrollList(Body, "EquipmentList", out var scroll);
-            Ui.Place(Ui.Rect(scroll), new Vector2(0, 0), new Vector2(0, 0), Vector2.zero, new Vector2(560, 740));
-            Ui.Rect(scroll).anchorMax = new Vector2(0, 1);
-            Ui.Rect(scroll).offsetMax = new Vector2(560, 0);
+            // 왼쪽 세로 전체, 폭 560
+            var left = Ui.Rect(scroll);
+            left.anchorMin = new Vector2(0, 0);
+            left.anchorMax = new Vector2(0, 1);
+            left.pivot = new Vector2(0, 0.5f);
+            left.offsetMin = Vector2.zero;
+            left.offsetMax = new Vector2(560, 0);
 
             var right = Ui.Panel(Body, "DetailPanel", UiColors.PanelLight);
             Ui.Stretch(right.rectTransform, 590, 0, 0, 0);

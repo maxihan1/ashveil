@@ -25,8 +25,10 @@ namespace Ashveil.Presentation
             var root = new GameObject($"Monster_{spawn.Id}_{info.Type}");
             root.transform.SetParent(parent, false);
             var isBoss = info.Type == MonsterType.ImpBoss;
-            var visual = CharacterVisual.Attach(root, GameResources.Prefab(GameResources.MonsterKey(info.Type)),
-                isBoss ? new Color(0.8f, 0.2f, 0.1f) : new Color(0.7f, 0.4f, 0.2f), isBoss ? 2.2f : 1f);
+            var prefab = GameResources.Prefab(GameResources.MonsterKey(info.Type));
+            // Boss Room 보스 모델은 원래 크다. 대체 캡슐일 때만 키운다.
+            var visual = CharacterVisual.Attach(root, prefab,
+                isBoss ? new Color(0.8f, 0.2f, 0.1f) : new Color(0.7f, 0.4f, 0.2f), isBoss && prefab == null ? 2.2f : 1f);
             var actor = root.AddComponent<Actor>();
             actor.Visual = visual;
             actor.NameplateHeight = isBoss ? 5f : 2.2f;

@@ -60,7 +60,8 @@ namespace Ashveil.Presentation
             if (Placement.Role != NpcRole.Guard) return;
             _attackTimer -= Time.deltaTime;
             var player = WorldServices.Player;
-            var chaotic = player != null && !player.Actor.IsDead && player.Actor.Alignment == AlignmentState.Chaotic;
+            var chaotic = player != null && !player.Actor.IsDead && player.Actor.Alignment == AlignmentState.Chaotic
+                          && Time.time >= player.ProtectedUntil;
             var nearTown = player != null && NearTown(player.transform.position);
             var inRange = player != null && Vector3.Distance(_post, player.transform.position) < WorldLayout.GuardAggroRange * 1.5f;
 

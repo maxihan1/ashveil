@@ -30,6 +30,7 @@ namespace Ashveil.Presentation
         private GroundItemView _itemTarget;
         private bool _pickupInFlight;
         private bool _deathReported;
+        private float _regen;
 
         public bool LocallyDead { get; private set; }
 
@@ -41,6 +42,7 @@ namespace Ashveil.Presentation
                 new Color(0.6f, 0.6f, 0.9f));
             var actor = root.AddComponent<Actor>();
             actor.Visual = visual;
+            actor.Team = Team.Bot;
             var collider = root.AddComponent<CapsuleCollider>();
             collider.isTrigger = true;
             collider.center = Vector3.up;
@@ -216,7 +218,19 @@ namespace Ashveil.Presentation
                     break;
 
                 case BotActionKind.Rest:
-                    Actor.Heal(Mathf.CeilToInt(Actor.MaxHp * 0.03f * dt * 10f) / 10 + 1);
+                    // 몬스터에게 맞는 중이면 먼저 떨어지고, 아니면 초당 최대 HP 5%씩 회복한다.
+                    var attacker = Actor.LastAttacker;
+                    if (attacker != null && !attacker.IsDead && Time.time - Actor.LastHitTime < 5f)
+                    {
+                        _motor.MoveDirection((transform.position - attacker.transform.position).normalized);
+                        break;
+                    }
+                    _regen += Actor.MaxHp * 0.05f * dt;
+                    if (_regen >= 1f)
+                    {
+                        Actor.Heal((int)_regen);
+                        _regen -= (int)_regen;
+                    }
                     break;
 
                 default:
