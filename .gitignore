@@ -36,3 +36,4 @@ infra/.env
 # 로컬 도구 산출물
 tools/unity-compile-check/.cache/
 tools/unity-compile-check/.work/
+qa-tests/target/

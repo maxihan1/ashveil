@@ -9,3 +9,15 @@
 - Boss Room 캐릭터 애니메이터 `CharacterSetController` 파라미터. `Speed`(float), `Attack1`, `Attack2`, `HitReact1`, `FallDown`, `Dead`, `SkillHeal`, `Buff1` 등(trigger). 애니메이션 이벤트는 `OnAnimEvent` 하나 → 수신용 빈 메서드 컴포넌트가 필요하다.
 - Boss Room 그래픽 프리팹(`Prefabs/CharGFX/CharacterGraphics/PlayerGraphics_*`, `ImpGraphics`, `VandalImpGraphics`, `BossGraphics`)에는 Boss Room 스크립트(ClientCharacter 등)가 붙어 있다. 스크립트를 복사하지 않으므로 "Missing Script" 로 남는다. 동작에는 영향이 없고, 생성기가 프리팹을 만들 때 `GameObjectUtility.RemoveMonoBehavioursWithMissingScript` 로 정리한다.
 - 스폰 좌표는 결정적 해시로 한 번 생성해 `SpawnTable` 에 리터럴로 넣었다(언어별 Random 구현 차이 회피).
+- 서버 통합 테스트는 테스트 클래스마다 전용 DB(ashveil_test_xxx)를 만들고 지운다. 난수는 ControlledRandom 으로 주입해 드랍·강화 결과를 고정한다.
+- 서버 설정(Jwt, Game, ConnectionString)은 DI 등록 시점이 아니라 첫 사용 시점에 읽는다. WebApplicationFactory 의 UseSetting 값이 Program 상단보다 늦게 들어오기 때문.
+- 리프레시 토큰은 회전 방식 + 재사용 감지(계정 전체 폐기). 그래서 클라이언트 ApiClient 는 동시 401 에도 갱신을 한 번만 한다(EditMode 테스트로 확인).
+- 물약 사용 API(use-item)가 초안에 없어 추가했다(D-27).
+- Boss Room 플레이어 그래픽 프리팹에는 Animator 가 없다. 원본은 PlayerAvatar 쪽 Animator(CharacterSet.fbx 아바타 + 직업별 override controller)를 쓴다. 생성기가 그래픽 루트에 Animator 를 붙인다. 리그는 Generic(animationType 2).
+- Boss Room 몬스터·보스 그래픽 프리팹에는 Animator 와 override controller 가 이미 있다.
+- Kenney FBX 는 URP 가 켜진 뒤 다시 가져와야 내장 머티리얼이 URP Lit 으로 만들어진다(생성기에서 ForceUpdate 재임포트).
+- URP 에셋은 리플렉션으로 UniversalRenderPipelineAsset.CreateRendererAsset/Create 를 호출해 만든다(컴파일 의존 없음, 패키지 소스 확인).
+- AltTester 2.3.2 런타임 105개 파일 중 8개만 #if ALTTESTER 로 감싸져 있어, Release 제외를 위해 패키지를 QA 잡에서만 추가한다(D-29).
+- 컴파일 하네스는 C# 9 로 고정해야 한다. 최신 C# 의 span 변환 규칙 때문에 Unity TestRunner 소스의 .Reverse() 가 void 메서드로 바뀌어 깨진다.
+- GetComponent 결과에 ?? 를 쓰면 에디터의 가짜 null 을 통과시키므로 == null 로 확인한다.
+- .meta 파일은 커밋하지 않는다. 생성물이 같은 CI 실행 안에서 GUID 를 참조하므로 문제가 없다(D-32).
