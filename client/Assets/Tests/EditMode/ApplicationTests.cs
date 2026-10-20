@@ -186,5 +186,19 @@ namespace Ashveil.Tests
             Assert.AreEqual(20, state.Mp);
             Assert.IsFalse(state.TrySpendMp(21));
         }
+
+        [Test]
+        public void LateResponses_DoNotReviveDeadPlayer()
+        {
+            var state = new PlayerState();
+            var character = new CharacterDto { Gold = 1, Stats = new StatsDto { MaxHp = 50, MaxMp = 20 }, Alignment = new AlignmentDto() };
+            state.Apply(character);
+            state.Damage(999);
+            state.Heal(30, 0);                          // 사망 직전 보낸 물약 응답
+            state.Apply(character, fillVitals: true);   // 사망 직전 레벨업 응답
+            Assert.IsTrue(state.IsDead, "부활은 RestoreVitals(마을 부활)로만 한다");
+            state.RestoreVitals();
+            Assert.AreEqual(50, state.Hp);
+        }
     }
 }

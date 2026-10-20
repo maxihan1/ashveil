@@ -73,8 +73,11 @@ namespace Ashveil.Presentation
             }
             catch (Exception e)
             {
+                // 잘못된 서버 주소가 HTML 을 돌려줘 JSON 파싱이 실패하는 경우 등. 화면이 잠긴 채 남지 않게 onError 도 부른다.
                 Debug.LogException(e);
-                Toast.Show("오류가 발생했습니다.");
+                var wrapped = new ApiException(Shared.ErrorCodes.Internal, "응답을 처리하지 못했습니다. 서버 주소를 확인해 주세요.", 0);
+                if (onError != null) onError(wrapped);
+                else Toast.Show(wrapped.Message);
             }
         }
     }

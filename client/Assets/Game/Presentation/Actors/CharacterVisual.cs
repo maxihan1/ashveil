@@ -41,10 +41,13 @@ namespace Ashveil.Presentation
             }
             model.name = "Visual";
             model.transform.localRotation = Quaternion.identity;
-            model.transform.localScale = Vector3.one * scale;
+            // Boss Room 은 몬스터 크기를 그래픽 루트 배율로 둔다(임프 0.6, 보스 3). 덮어쓰지 말고 곱한다.
+            model.transform.localScale *= scale;
+            if (prefab == null) model.transform.localPosition = Vector3.up * scale; // 캡슐 바닥을 지면에 맞춘다
 
             var visual = root.AddComponent<CharacterVisual>();
             visual._model = model.transform;
+            visual.Height = MeasureHeight(root.transform, model);
             visual._animator = model.GetComponentInChildren<Animator>();
             if (visual._animator != null)
             {
@@ -56,6 +59,21 @@ namespace Ashveil.Presentation
             }
             return visual;
         }
+
+        /// <summary>모델 높이(m). 이름표 위치·콜라이더 크기를 맞출 때 쓴다.</summary>
+        public float Height { get; private set; } = 2f;
+
+        private static float MeasureHeight(Transform root, GameObject model)
+        {
+            var top = float.MinValue;
+            foreach (var r in model.GetComponentsInChildren<Renderer>())
+                if (!(r is ParticleSystemRenderer)) top = Mathf.Max(top, r.bounds.max.y);
+            var height = top - root.position.y;
+            return top > float.MinValue && height > 0.3f && height < 20f ? height : 2f;
+        }
+
+        // 거리 컬링으로 꺼졌다 켜지면 Animator 파라미터가 초기화되므로 기억한 이동 상태도 맞춘다.
+        private void OnEnable() => _moving = false;
 
         public void SetMoving(bool moving)
         {
@@ -96,11 +114,5 @@ namespace Ashveil.Presentation
         {
             if (_animator != null && _parameters.Contains(hash)) _animator.SetTrigger(hash);
         }
-    }
-
-    /// <summary>Boss Room 애니메이션 클립의 OnAnimEvent 이벤트를 받아 "수신자 없음" 오류를 막는다.</summary>
-    public sealed class AnimEventReceiver : MonoBehaviour
-    {
-        public void OnAnimEvent(AnimationEvent animationEvent) { }
     }
 }

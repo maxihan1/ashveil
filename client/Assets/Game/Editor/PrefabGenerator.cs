@@ -68,8 +68,22 @@ namespace Ashveil.Editor
             }
         }
 
-        /// <summary>원본 프리팹 인스턴스를 완전히 풀고 누락 스크립트를 지운 뒤 새 프리팹으로 저장한다.</summary>
+        /// <summary>한 프리팹 생성이 실패해도 나머지는 계속 만든다(실패한 것은 런타임이 캡슐로 대체).</summary>
         private static GameObject SaveGraphics(string sourcePath, string key, Avatar avatar, string controllerPath)
+        {
+            try
+            {
+                return SaveGraphicsUnsafe(sourcePath, key, avatar, controllerPath);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[Generator] 프리팹 생성 실패 {key} ← {sourcePath}: {e}");
+                return null;
+            }
+        }
+
+        /// <summary>원본 프리팹 인스턴스를 완전히 풀고 누락 스크립트를 지운 뒤 새 프리팹으로 저장한다.</summary>
+        private static GameObject SaveGraphicsUnsafe(string sourcePath, string key, Avatar avatar, string controllerPath)
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
             if (source == null)
@@ -105,6 +119,18 @@ namespace Ashveil.Editor
         }
 
         private static void SaveVfx(string key, string relative)
+        {
+            try
+            {
+                SaveVfxUnsafe(key, relative);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[Generator] VFX 생성 실패 {key} ← {relative}: {e}");
+            }
+        }
+
+        private static void SaveVfxUnsafe(string key, string relative)
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>($"{Vfx}/{relative}");
             if (source == null)

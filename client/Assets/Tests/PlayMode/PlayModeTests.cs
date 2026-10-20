@@ -50,7 +50,8 @@ namespace Ashveil.Tests
             GameContext.Initialize(new ServerSettings(UnityEngine.Application.temporaryCachePath, "{\"baseUrl\":\"http://fake.local\"}"), _server);
         }
 
-        private static readonly string[] CreatedRoots = { "Boot", "AppRoot", "ToastCanvas", "EventSystem", "Player", "HudCanvas", "NameplateCanvas", "Main Camera" };
+        private static readonly string[] CreatedRoots =
+            { "Boot", "AppRoot", "ToastCanvas", "EventSystem", "Player", "HudCanvas", "NameplateCanvas", "Main Camera", "JoystickTestCanvas" };
 
         [TearDown]
         public void TearDown()
@@ -112,6 +113,32 @@ namespace Ashveil.Tests
 
             GameContext.Player.Apply(new InventoryDto { Gold = 99, Capacity = 40 });
             Assert.AreEqual("99", gold.text, "인벤토리 응답의 골드도 반영되어야 한다");
+        }
+
+        [UnityTest]
+        public IEnumerator Joystick_CenterIsNeutral_AndLeftMeansWest()
+        {
+            var canvas = Ui.CreateCanvas("JoystickTestCanvas", 0);
+            var joystick = VirtualJoystick.Create(canvas.transform);
+            yield return null;
+
+            var rect = (RectTransform)joystick.transform;
+            var center = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center));
+            var data = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { position = center };
+            joystick.OnPointerDown(data);
+            Assert.Less(joystick.Value.magnitude, 0.05f, "패드 한가운데는 정지");
+
+            data.position = center + new Vector2(-600, 0);
+            joystick.OnDrag(data);
+            Assert.Less(joystick.Value.x, -0.9f, "왼쪽으로 끌면 서쪽");
+            Assert.AreEqual(0f, joystick.Value.y, 0.05f);
+
+            data.position = center + new Vector2(0, -600);
+            joystick.OnDrag(data);
+            Assert.Less(joystick.Value.y, -0.9f, "아래로 끌면 남쪽(마을 방향)");
+
+            joystick.OnPointerUp(data);
+            Assert.AreEqual(Vector2.zero, joystick.Value);
         }
 
         [UnityTest]

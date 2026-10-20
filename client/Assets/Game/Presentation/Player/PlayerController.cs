@@ -38,6 +38,7 @@ namespace Ashveil.Presentation
                 new Color(0.3f, 0.6f, 1f));
             var actor = root.AddComponent<Actor>();
             actor.Visual = visual;
+            actor.NameplateHeight = visual.Height + 0.3f;
             var collider = root.AddComponent<CapsuleCollider>();
             collider.isTrigger = true;
             collider.center = Vector3.up;
@@ -104,6 +105,7 @@ namespace Ashveil.Presentation
             for (var i = 0; i < SkillCooldowns.Length; i++) SkillCooldowns[i] = Mathf.Max(0, SkillCooldowns[i] - dt);
             // 선공 표시는 시간이 지나면 풀리므로 주기적으로 다시 계산한다.
             if (Time.frameCount % 30 == 0) SyncFromState();
+            Regenerate(dt);
 
             var input = JoystickInput;
 #if UNITY_EDITOR
@@ -151,6 +153,23 @@ namespace Ashveil.Presentation
                 Motor.Face(Target.transform.position);
                 if (AttackCooldown <= 0) BasicAttack();
             }
+        }
+
+        private float _regenHp;
+        private float _regenMp;
+
+        /// <summary>자연 회복: HP 초당 1%, MP 초당 2%(HP·MP 는 클라이언트 런타임 상태, D-22).</summary>
+        private void Regenerate(float dt)
+        {
+            if (Player.Hp >= Player.MaxHp && Player.Mp >= Player.MaxMp) return;
+            _regenHp += Player.MaxHp * CombatRules.RegenPerSecondPercent * dt;
+            _regenMp += Player.MaxMp * CombatRules.RegenPerSecondPercent * 2f * dt;
+            if (_regenHp < 1f && _regenMp < 1f) return;
+            var hp = (int)_regenHp;
+            var mp = (int)_regenMp;
+            _regenHp -= hp;
+            _regenMp -= mp;
+            Player.Heal(hp, mp);
         }
 
         public void SetTarget(Actor actor)
@@ -314,6 +333,7 @@ namespace Ashveil.Presentation
             if (Actor.IsDead) return;
             ClearTarget();
             AutoHunt = false;
+            WorldServices.Hud?.SyncToggles();
             TeleportTo(WorldLayout.RespawnPoint);
             Toast.Show("마을로 돌아왔습니다.");
         }

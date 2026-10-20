@@ -31,13 +31,14 @@ namespace Ashveil.Presentation
                 isBoss ? new Color(0.8f, 0.2f, 0.1f) : new Color(0.7f, 0.4f, 0.2f), isBoss && prefab == null ? 2.2f : 1f);
             var actor = root.AddComponent<Actor>();
             actor.Visual = visual;
-            actor.NameplateHeight = isBoss ? 5f : 2.2f;
+            actor.NameplateHeight = visual.Height + 0.4f;
             actor.Init(Team.Monster, info.Name, info.Level, info.MaxHp, info.Attack, info.Defense);
+            // 탭하기 쉽도록 모델 크기에 맞춘 넉넉한 콜라이더
             var collider = root.AddComponent<CapsuleCollider>();
             collider.isTrigger = true;
-            collider.center = Vector3.up * (isBoss ? 2f : 1f);
-            collider.height = isBoss ? 4f : 2f;
-            collider.radius = isBoss ? 1.5f : 0.6f;
+            collider.height = Mathf.Max(1.6f, visual.Height);
+            collider.center = Vector3.up * collider.height * 0.5f;
+            collider.radius = Mathf.Max(0.6f, visual.Height * 0.3f);
             var motor = root.AddComponent<ActorMotor>();
             motor.Speed = info.MoveSpeed;
 

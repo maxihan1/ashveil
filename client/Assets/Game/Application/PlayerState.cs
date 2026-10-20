@@ -41,7 +41,8 @@ namespace Ashveil.Application
             var first = Character == null;
             Character = character;
             if (Inventory != null) Inventory.Gold = character.Gold;
-            if (first || fillVitals) RestoreVitals();
+            // 사망 후 늦게 도착한 응답(레벨업 등)이 죽은 캐릭터를 되살리지 않게 한다. 부활은 RestoreVitals 로만.
+            if (first || (fillVitals && !IsDead)) RestoreVitals();
             else ClampVitals();
             CharacterChanged?.Invoke();
         }
@@ -88,6 +89,7 @@ namespace Ashveil.Application
 
         public void Heal(int hp, int mp)
         {
+            if (IsDead) return;
             Hp = Math.Min(MaxHp, Hp + Math.Max(0, hp));
             Mp = Math.Min(MaxMp, Mp + Math.Max(0, mp));
             VitalsChanged?.Invoke();

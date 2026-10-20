@@ -28,6 +28,8 @@ namespace Ashveil.Presentation
         {
             if (_instance != null) return _instance;
             var canvas = Ui.CreateCanvas("ToastCanvas", 900);
+            // 토스트는 터치를 받지 않는다(아래 버튼 탭을 삼키지 않게).
+            canvas.GetComponent<GraphicRaycaster>().enabled = false;
             DontDestroyOnLoad(canvas.gameObject);
             _instance = canvas.gameObject.AddComponent<Toast>();
             _instance._stack = Ui.Place(Ui.Node(canvas.transform, "ToastStack"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -49,6 +51,7 @@ namespace Ashveil.Presentation
                 _visible.RemoveAt(0);
             }
             var row = Ui.Row(_stack, "ToastMessage", 70, new Color(0, 0, 0, 0.78f));
+            row.raycastTarget = false;
             var text = Ui.Label(row.transform, "Text", message, 30, TextAnchor.MiddleCenter);
             Ui.Stretch(Ui.Rect(text), 20, 20, 4, 4);
             _visible.Add(row.gameObject);

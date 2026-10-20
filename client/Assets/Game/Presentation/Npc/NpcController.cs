@@ -22,6 +22,7 @@ namespace Ashveil.Presentation
             var visual = CharacterVisual.Attach(root, GameResources.Prefab(GameResources.NpcKey(placement.Role)), new Color(0.4f, 0.8f, 0.4f));
             var actor = root.AddComponent<Actor>();
             actor.Visual = visual;
+            actor.NameplateHeight = visual.Height + 0.3f;
             actor.Init(placement.Role == NpcRole.Guard ? Team.Guard : Team.Npc, placement.Name, 99, 99999, 0, 999);
             actor.Invulnerable = true;
             var collider = root.AddComponent<CapsuleCollider>();

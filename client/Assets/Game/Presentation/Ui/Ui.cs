@@ -86,6 +86,8 @@ namespace Ashveil.Presentation
         {
             if (EventSystem.current != null) return;
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            // 기본 10px 은 고해상도 폰에서 손떨림만으로 스크롤 드래그가 시작돼 목록 안 버튼 클릭이 취소된다(약 3mm 로 잡는다).
+            go.GetComponent<EventSystem>().pixelDragThreshold = Mathf.Max(10, (int)(Screen.dpi * 0.12f));
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
 

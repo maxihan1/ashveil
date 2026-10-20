@@ -48,7 +48,7 @@ namespace Ashveil.Presentation
         }
     }
 
-    public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+    public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler, IInitializePotentialDragHandler
     {
         private RectTransform _area;
         private RectTransform _knob;
@@ -74,9 +74,14 @@ namespace Ashveil.Presentation
 
         public void OnPointerDown(PointerEventData eventData) => OnDrag(eventData);
 
+        // 조이스틱은 드래그 임계값 없이 바로 반응한다(EventSystem 임계값은 스크롤 목록용으로 크게 잡는다).
+        public void OnInitializePotentialDrag(PointerEventData eventData) => eventData.useDragThreshold = false;
+
         public void OnDrag(PointerEventData eventData)
         {
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_area, eventData.position, eventData.pressEventCamera, out var local)) return;
+            // 로컬 좌표는 pivot(왼쪽 아래) 기준이므로 패드 중심 기준으로 옮긴다.
+            local -= _area.rect.center;
             var clamped = Vector2.ClampMagnitude(local, _radius);
             _knob.anchoredPosition = clamped;
             Value = clamped / _radius;
@@ -100,6 +105,7 @@ namespace Ashveil.Presentation
     {
         private const float TapMaxMove = 30f;
         private readonly Dictionary<int, (Vector2 start, bool overUi)> _touches = new Dictionary<int, (Vector2, bool)>();
+        private static readonly List<RaycastResult> UiHits = new List<RaycastResult>();
         private Vector2 _mouseStart;
         private bool _mouseOverUi;
 
@@ -111,11 +117,12 @@ namespace Ashveil.Presentation
                 {
                     var touch = Input.GetTouch(i);
                     if (touch.phase == TouchPhase.Began)
-                        _touches[touch.fingerId] = (touch.position, IsOverUi(touch.fingerId));
+                        _touches[touch.fingerId] = (touch.position, IsOverUi(touch.position));
                     else if ((touch.phase == TouchPhase.Ended) && _touches.TryGetValue(touch.fingerId, out var info))
                     {
                         _touches.Remove(touch.fingerId);
-                        if (!info.overUi && (touch.position - info.start).magnitude < TapMaxMove) HandleTap(touch.position);
+                        if (!info.overUi && !IsOverUi(touch.position) && (touch.position - info.start).magnitude < TapMaxMove)
+                            HandleTap(touch.position);
                     }
                     else if (touch.phase == TouchPhase.Canceled) _touches.Remove(touch.fingerId);
                 }
@@ -127,14 +134,24 @@ namespace Ashveil.Presentation
             if (Input.GetMouseButtonDown(0))
             {
                 _mouseStart = Input.mousePosition;
-                _mouseOverUi = IsOverUi(-1);
+                _mouseOverUi = IsOverUi(Input.mousePosition);
             }
             if (Input.GetMouseButtonUp(0) && !_mouseOverUi && ((Vector2)Input.mousePosition - _mouseStart).magnitude < TapMaxMove)
                 HandleTap(Input.mousePosition);
         }
 
-        private static bool IsOverUi(int pointerId) =>
-            EventSystem.current != null && (pointerId < 0 ? EventSystem.current.IsPointerOverGameObject() : EventSystem.current.IsPointerOverGameObject(pointerId));
+        /// <summary>
+        /// 그 위치에 UI 가 있는지 직접 레이캐스트한다. IsPointerOverGameObject 는 EventSystem 이 이번 프레임 입력을
+        /// 처리했는지(실행 순서)에 따라 결과가 달라져, 창 뒤의 월드까지 탭되는 일이 생긴다.
+        /// </summary>
+        private static bool IsOverUi(Vector2 screenPosition)
+        {
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null) return false;
+            UiHits.Clear();
+            eventSystem.RaycastAll(new PointerEventData(eventSystem) { position = screenPosition }, UiHits);
+            return UiHits.Count > 0;
+        }
 
         public static void HandleTap(Vector2 screenPosition)
         {

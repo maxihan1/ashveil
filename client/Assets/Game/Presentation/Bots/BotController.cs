@@ -42,6 +42,7 @@ namespace Ashveil.Presentation
                 new Color(0.6f, 0.6f, 0.9f));
             var actor = root.AddComponent<Actor>();
             actor.Visual = visual;
+            actor.NameplateHeight = visual.Height + 0.3f;
             actor.Team = Team.Bot;
             var collider = root.AddComponent<CapsuleCollider>();
             collider.isTrigger = true;

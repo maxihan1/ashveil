@@ -21,6 +21,10 @@ FOLDERS=(
   "Assets/Prefabs/Dungeon"
   "Assets/VFX"
 )
+# 위 폴더의 프리팹이 중첩 참조하는 개별 파일 (CharGFX 그래픽 4종이 Shadow 프리팹을 품고 있다)
+FILES=(
+  "Assets/Prefabs/Shadow.prefab"
+)
 
 command -v git-lfs >/dev/null || { echo "git-lfs 가 필요합니다 (brew install git-lfs / apt install git-lfs)"; exit 1; }
 
@@ -44,6 +48,13 @@ for folder in "${FOLDERS[@]}"; do
   mkdir -p "$DEST/$(dirname "$rel")"
   rsync -a --delete "$WORK/$folder/" "$DEST/$rel/"
   [[ -f "$WORK/$folder.meta" ]] && cp "$WORK/$folder.meta" "$DEST/$rel.meta"
+done
+# sparse-checkout(cone) 은 지정 폴더의 상위 폴더에 바로 있는 파일도 받으므로 개별 파일은 그대로 복사하면 된다.
+for file in "${FILES[@]}"; do
+  rel="${file#Assets/}"
+  mkdir -p "$DEST/$(dirname "$rel")"
+  cp "$WORK/$file" "$DEST/$rel"
+  cp "$WORK/$file.meta" "$DEST/$rel.meta"
 done
 
 # LFS 포인터가 아니라 실제 파일이 왔는지 확인한다.
