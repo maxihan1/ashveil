@@ -35,3 +35,5 @@
 | D-29 | AltTester SDK(2.3.2, GPL-3)는 **QA 빌드 잡에서만 manifest 에 추가**한다 | SDK 런타임 105개 파일 중 8개만 `#if ALTTESTER` 로 감싸져 있고 link.xml 로 보존되므로, 패키지가 있으면 Release 에도 코드가 들어간다. 패키지 자체를 빼야 "Release 는 AltTester 제외" 가 지켜진다. QA 전용 코드는 여전히 정의 심볼(`ALTTESTER`, `QA_BUILD`)로 분기한다 |
 | D-30 | GameCI는 **unity-builder@v4, unity-test-runner@v4**, Unity Personal 라이선스(Secrets 3종) | 공식 문서 예제가 v4 기준이고 안정적이다. unity-activate 는 필요 없다 |
 | D-31 | 미니맵은 **UI 점(dot) 방식**(카메라 렌더 텍스처 아님) | 모바일에서 카메라 하나를 더 그리는 비용이 없고, AltTester로 점 오브젝트를 바로 확인할 수 있다 |
+| D-32 | 우리 스크립트·에셋의 **`.meta` 파일은 커밋하지 않는다** | 로컬에 Editor 가 없어 Unity 가 만든 meta 를 받을 수 없다. 씬·프리팹이 같은 CI 실행 안에서 생성되어 GUID 가 그 실행 안에서만 일관되면 충분하다. 사람이 Editor 로 작업하게 되면 그때 meta 를 커밋한다 |
+| D-33 | 봇은 몬스터에게 죽지 않는다(HP 1에서 멈춤). 봇 사망은 플레이어 처치(`bot-kill`)로만 생긴다 | 봇 사망은 서버 상태(사망·부활·전리품)라서 보고 API 가 있는 경로로만 일어나게 한다 |
