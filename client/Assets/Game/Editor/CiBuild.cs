@@ -105,7 +105,8 @@ namespace Ashveil.Editor
                 target = BuildTarget.Android,
                 targetGroup = BuildTargetGroup.Android,
                 locationPathName = args.OutputPath,
-                options = args.IsQa ? BuildOptions.Development : BuildOptions.None,
+                // AltTester 런타임은 NUnit·TestRunner 를 참조하므로 QA 빌드는 테스트 어셈블리를 포함한다(AltTester 문서 예제와 동일).
+                options = args.IsQa ? BuildOptions.Development | BuildOptions.IncludeTestAssemblies : BuildOptions.None,
             });
             var summary = report.summary;
             Debug.Log($"[Build] 결과 {summary.result}, 크기 {summary.totalSize / (1024 * 1024)}MB, 오류 {summary.totalErrors}, 경고 {summary.totalWarnings}, {summary.totalTime}");
