@@ -13,21 +13,22 @@ Unity 라이선스 Secret이 없으면 test·build 잡은 건너뛰고 경고만
 
 ## 1. 개발자가 할 일: Unity Personal 라이선스 Secrets 등록 (10분)
 
-1. Mac 에 **Unity Hub만** 설치한다. Editor 는 설치하지 않아도 된다.
-2. Unity Hub → 설정(Preferences) → Licenses → **Add** → **Get a free personal license** 를 누른다. 이미 라이선스가 보여도 Add 를 누른다.
-3. 터미널에서 라이선스 파일을 클립보드로 복사한다.
-   ```bash
-   cat "/Library/Application Support/Unity/Unity_lic.ulf" | pbcopy
-   ```
-4. GitHub 저장소 → Settings → Secrets and variables → Actions → **New repository secret** 으로 3개를 만든다.
+Unity 는 CI 안에서도 활성화된 라이선스가 있어야 실행된다. 무료 Personal 라이선스면 된다(Unity 약관상 최근 12개월 매출·투자 20만 달러 미만). Unity 가 Personal 의 수동 활성화(`.ulf` 파일)를 없앴기 때문에, GameCI 가 CI 안에서 Unity 계정 이메일·비밀번호로 Personal 좌석을 직접 받는다(D-34).
+
+1. CI 전용 Unity 계정을 만든다(https://id.unity.com). 구글·애플 소셜 로그인이 아닌 이메일·비밀번호 계정이어야 하고, **2단계 인증은 끈다**.
+2. Mac 에 **Unity Hub만** 설치하고 그 계정으로 로그인한 뒤 설정(Preferences) → Licenses → **Add** → **Get a free personal license** 를 한 번 누른다. 계정에 Personal 라이선스가 생긴다. Editor 는 설치하지 않는다.
+3. GitHub 저장소 → Settings → Secrets and variables → Actions → **New repository secret** 으로 2개를 만든다.
 
 | Secret | 값 |
 |---|---|
-| `UNITY_LICENSE` | 3번에서 복사한 `.ulf` 파일 내용 전체 |
-| `UNITY_EMAIL` | Unity 계정 이메일 |
-| `UNITY_PASSWORD` | Unity 계정 비밀번호 (특수문자가 없으면 문제가 적다) |
+| `UNITY_EMAIL` | 1번 계정 이메일 |
+| `UNITY_PASSWORD` | 1번 계정 비밀번호 (특수문자가 없으면 문제가 적다) |
 
-5. Actions 탭 → `unity-ci` → **Run workflow** 로 수동 실행하면 테스트와 APK 빌드가 돈다.
+4. Actions 탭 → `unity-ci` → **Run workflow** 로 수동 실행하면 테스트와 APK 빌드가 돈다.
+
+- `UNITY_LICENSE`(`.ulf`) Secret 은 만들지 않는다. Hub 가 만든 `.ulf` 는 그 Mac 에 묶여 있어 CI 러너에서는 실패한다.
+- Personal 좌석은 적다. 그래서 build 잡은 QA·Release 를 차례로 빌드하고, 새 푸시가 와도 돌고 있는 실행을 취소하지 않는다(취소된 잡은 좌석을 반납하지 못할 수 있다).
+- 활성화가 좌석 부족(no available Personal seats)으로 실패하면 https://id.unity.com 에서 남아 있는 활성화를 해제하고 다시 실행한다. Unity 가 새 기기 확인 메일을 보냈다면 승인한 뒤 다시 실행한다.
 
 ### 선택 Secrets·Variables
 
@@ -43,7 +44,7 @@ Unity 라이선스 Secret이 없으면 test·build 잡은 건너뛰고 경고만
 free-disk-space → checkout
 → tools/fetch-bossroom.sh       Boss Room 고정 커밋 1299ba4f 에서 아트 폴더만 sparse + LFS 로 받기 (캐시)
 → (QA만) tools/ci/enable-alttester.py   manifest 에 com.alttester.sdk 2.3.2 (OpenUPM) 추가
-→ game-ci/unity-builder@v4       -executeMethod Ashveil.Editor.CiBuild.BuildAndroid
+→ game-ci/unity-builder@v6       -executeMethod Ashveil.Editor.CiBuild.BuildAndroid
      ├ ContentGenerator.GenerateAll()   URP 에셋, 프리팹, Boot·World 씬 생성
      ├ 변형별 설정                       번들 ID, 앱 이름, 정의 심볼(QA_BUILD), HTTP 허용, 서버 주소
      ├ (QA만) AltTester 계측             ALTTESTER 정의 + 첫 씬에 AltTester 프리팹(호스트·포트·앱 이름)
