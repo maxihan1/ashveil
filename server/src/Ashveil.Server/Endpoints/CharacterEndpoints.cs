@@ -119,6 +119,29 @@ public static class CharacterEndpoints
         group.MapPost("/{id:long}/unequip", (long id, EquipRequest req, HttpContext http, GameDbContext db) =>
             ChangeEquipAsync(db, id, http.AccountId(), req.ItemId, equip: false));
 
+        // 소모품(물약) 사용. HP·MP 는 클라이언트 런타임 상태이므로 회복량만 돌려준다.
+        group.MapPost("/{id:long}/use-item", async (long id, UseItemRequest req, HttpContext http, GameDbContext db) =>
+        {
+            Character character = null!;
+            ItemTemplate template = null!;
+            await db.InTransactionAsync(async () =>
+            {
+                character = await db.LockOwnedCharacterAsync(id, http.AccountId());
+                var item = await db.Items.SingleOrDefaultAsync(i =>
+                    i.Id == req.ItemId && i.OwnerKind == OwnerKind.Character && i.OwnerId == character.Id)
+                    ?? throw GameErrors.NotFound("아이템");
+                template = ItemCatalog.Get(item.TemplateId);
+                if (template.Type != ItemType.Consumable) throw GameErrors.Conflict(ErrorCodes.NotUsable);
+                if (item.Quantity > 1) item.Quantity -= 1;
+                else db.Items.Remove(item);
+            });
+            return new UseItemResponse
+            {
+                TemplateId = template.Id, HealHp = template.HealHp, HealMp = template.HealMp,
+                Inventory = await db.InventoryDtoAsync(character),
+            };
+        });
+
         group.MapGet("/{id:long}/pk-history", async (long id, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
             var character = await db.GetOwnedCharacterAsync(id, http.AccountId());

@@ -22,7 +22,7 @@
 | 404 | `NOT_FOUND` | 캐릭터·아이템·봇·바닥 아이템 없음 |
 | 409 | `USERNAME_TAKEN`, `NAME_TAKEN`, `CHARACTER_LIMIT` | 계정·캐릭터 생성 |
 | 409 | `INSUFFICIENT_GOLD`, `INVENTORY_FULL`, `NOT_ENOUGH_QUANTITY`, `ITEM_EQUIPPED` | 상점·인벤토리 |
-| 409 | `NOT_EQUIPPABLE`, `SCROLL_MISMATCH`, `MAX_ENHANCE`, `NOT_SELLABLE` | 장비·강화 |
+| 409 | `NOT_EQUIPPABLE`, `NOT_USABLE`, `SCROLL_MISMATCH`, `MAX_ENHANCE`, `NOT_SELLABLE` | 장비·소모품·강화 |
 | 409 | `INVALID_SPAWN`, `OUT_OF_RANGE`, `COOLDOWN`, `SAFE_ZONE`, `BOT_DEAD`, `INVALID_TARGET`, `ITEM_EXPIRED` | 전투·월드 |
 | 404 | `GM_DISABLED` | QA가 아닌 환경에서 GM API 호출 |
 
@@ -50,6 +50,7 @@
 | GET | `/characters/{id}/inventory` | - | `InventoryDto` |
 | POST | `/characters/{id}/equip` | `{ itemId }` | `EquipResponse` (같은 부위 장비는 자동 해제) |
 | POST | `/characters/{id}/unequip` | `{ itemId }` | `EquipResponse` |
+| POST | `/characters/{id}/use-item` | `{ itemId }` 소모품만 | `{ templateId, healHp, healMp, inventory }` (초안에 없던 API. 물약 퀵슬롯·자동 물약용, decisions.md D-27) |
 | GET | `/characters/{id}/pk-history` | - | `PkHistoryDto` |
 
 ```

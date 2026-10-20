@@ -21,6 +21,7 @@ namespace Ashveil.Shared
         public const string NotSellable = "NOT_SELLABLE";
 
         public const string NotEquippable = "NOT_EQUIPPABLE";
+        public const string NotUsable = "NOT_USABLE";
         public const string ScrollMismatch = "SCROLL_MISMATCH";
         public const string MaxEnhance = "MAX_ENHANCE";
 

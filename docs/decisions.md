@@ -30,3 +30,8 @@
 | D-24 | 마이그레이션은 **EF Core Migrations**, 서버 시작 시 자동 적용 | 스키마 이력을 코드로 남기는 상용 관례 |
 | D-25 | Unity 라이선스 Secret이 없으면 Unity CI 잡은 **경고 후 건너뛴다** | 서버 CI 결과를 Unity 설정과 분리해 항상 볼 수 있게 한다 |
 | D-26 | 로컬에서 **Unity 관리 DLL을 참조해 C# 컴파일만 검사하는 하네스**(`tools/unity-compile-check`)를 둔다 | CI 반복 비용이 크다. 푸시 전에 컴파일 오류를 잡는다. Editor 실행이 아니라 DLL 참조만 쓰므로 메모리 제약을 지킨다 |
+| D-27 | API 초안에 없던 **`POST /characters/{id}/use-item`** 을 추가한다 | 물약 퀵슬롯·자동사냥 물약은 인벤토리를 바꾸므로 서버 권위 원칙상 서버 API가 필요하다 |
+| D-28 | Unity 버전은 **6000.0.84f1** (Boss Room 원본은 6000.0.52f1) | CVE-2025-59489 가 6000.0.58f2 미만 빌드에 영향을 준다(Android 코드 실행). 같은 6000.0 LTS 라인이라 Boss Room 에셋 호환성 문제는 낮다 |
+| D-29 | AltTester SDK(2.3.2, GPL-3)는 **QA 빌드 잡에서만 manifest 에 추가**한다 | SDK 런타임 105개 파일 중 8개만 `#if ALTTESTER` 로 감싸져 있고 link.xml 로 보존되므로, 패키지가 있으면 Release 에도 코드가 들어간다. 패키지 자체를 빼야 "Release 는 AltTester 제외" 가 지켜진다. QA 전용 코드는 여전히 정의 심볼(`ALTTESTER`, `QA_BUILD`)로 분기한다 |
+| D-30 | GameCI는 **unity-builder@v4, unity-test-runner@v4**, Unity Personal 라이선스(Secrets 3종) | 공식 문서 예제가 v4 기준이고 안정적이다. unity-activate 는 필요 없다 |
+| D-31 | 미니맵은 **UI 점(dot) 방식**(카메라 렌더 텍스처 아님) | 모바일에서 카메라 하나를 더 그리는 비용이 없고, AltTester로 점 오브젝트를 바로 확인할 수 있다 |

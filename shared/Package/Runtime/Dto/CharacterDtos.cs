@@ -97,6 +97,19 @@ namespace Ashveil.Shared.Dto
         public StatsDto Stats { get; set; }
     }
 
+    public sealed class UseItemRequest
+    {
+        public long ItemId { get; set; }
+    }
+
+    public sealed class UseItemResponse
+    {
+        public string TemplateId { get; set; }
+        public int HealHp { get; set; }
+        public int HealMp { get; set; }
+        public InventoryDto Inventory { get; set; }
+    }
+
     public sealed class PkRecordDto
     {
         public EntityKind KillerKind { get; set; }

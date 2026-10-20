@@ -140,6 +140,22 @@ public class AuthAndCharacterTests(ServerFixture server) : IClassFixture<ServerF
     }
 
     [Fact]
+    public async Task UseItem_ConsumesPotion_AndRejectsEquipment()
+    {
+        var (client, character) = await server.NewPlayerAsync();
+        var inventory = await client.InventoryAsync(character.Id);
+        var potion = inventory.Items.Single(i => i.TemplateId == ItemCatalog.PotionHpSmall);
+        var weapon = inventory.Items.Single(i => i.EquippedSlot == EquipSlot.Weapon);
+
+        var used = await client.PostAsync<UseItemResponse>($"/characters/{character.Id}/use-item", new UseItemRequest { ItemId = potion.Id });
+        Assert.Equal(60, used.HealHp);
+        Assert.Equal(9, used.Inventory.Items.Single(i => i.Id == potion.Id).Quantity);
+
+        await client.PostErrorAsync($"/characters/{character.Id}/use-item", new UseItemRequest { ItemId = weapon.Id },
+            HttpStatusCode.Conflict, ErrorCodes.NotUsable);
+    }
+
+    [Fact]
     public async Task Equip_SwapsItemInSameSlot_AndUpdatesStats()
     {
         var (client, character) = await server.NewPlayerAsync(ClassType.Warrior);

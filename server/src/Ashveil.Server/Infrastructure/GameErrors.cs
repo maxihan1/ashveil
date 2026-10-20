@@ -36,6 +36,7 @@ public static class GameErrors
         ErrorCodes.ItemEquipped => "장착 중인 아이템입니다. 먼저 해제해 주세요.",
         ErrorCodes.NotSellable => "판매할 수 없는 아이템입니다.",
         ErrorCodes.NotEquippable => "장착하거나 강화할 수 없는 아이템입니다.",
+        ErrorCodes.NotUsable => "사용할 수 없는 아이템입니다.",
         ErrorCodes.ScrollMismatch => "이 장비에 사용할 수 없는 주문서입니다.",
         ErrorCodes.MaxEnhance => "더 이상 강화할 수 없습니다.",
         ErrorCodes.InvalidSpawn => "알 수 없는 몬스터입니다.",
