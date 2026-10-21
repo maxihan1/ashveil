@@ -16,6 +16,7 @@ public class GameDbContext(DbContextOptions<GameDbContext> options) : DbContext(
     public DbSet<SpawnCooldown> SpawnCooldowns => Set<SpawnCooldown>();
     public DbSet<PkRecord> PkRecords => Set<PkRecord>();
     public DbSet<AlignmentHistory> AlignmentHistories => Set<AlignmentHistory>();
+    public DbSet<MonsterSpawn> MonsterSpawns => Set<MonsterSpawn>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -84,6 +85,12 @@ public class GameDbContext(DbContextOptions<GameDbContext> options) : DbContext(
         });
 
         b.Entity<AlignmentHistory>(e => e.HasIndex(x => new { x.EntityKind, x.EntityId }));
+
+        b.Entity<MonsterSpawn>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasMaxLength(16);
+        });
     }
 
     // 행 잠금(SELECT ... FOR UPDATE). 잠금 순서는 캐릭터 → 봇 → 바닥 아이템으로 고정해 교착을 막는다.

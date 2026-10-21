@@ -174,5 +174,17 @@ namespace Ashveil.Shared.Dto
         public const string ShopSell = "SHOP_SELL";
         public const string Enhance = "ENHANCE";
         public const string GmGrant = "GM_GRANT";
+        public const string AdminAdjust = "ADMIN_ADJUST";
+        public const string AdminReset = "ADMIN_RESET";
+    }
+
+    /// <summary>몬스터 스폰 지점(서버가 관리하고 클라이언트가 월드 입장 때 받는다).</summary>
+    public sealed class SpawnPointDto
+    {
+        public string Id { get; set; }
+        public ZoneId Zone { get; set; }
+        public MonsterType Monster { get; set; }
+        public float X { get; set; }
+        public float Z { get; set; }
     }
 }

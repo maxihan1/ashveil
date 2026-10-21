@@ -18,9 +18,9 @@ public static class CombatEndpoints
             RuntimeGameConfig config, IRandomSource random, TimeProvider clock) =>
         {
             GameOps.RequireFinite(req.X, req.Z);
-            if (!SpawnTable.TryGet(req.SpawnId, out var spawn) || spawn.Monster != req.MonsterId)
-                throw GameErrors.Conflict(ErrorCodes.InvalidSpawn);
-            var info = spawn.Info;
+            var spawn = req.SpawnId == null ? null : await db.MonsterSpawns.AsNoTracking().SingleOrDefaultAsync(s => s.Id == req.SpawnId);
+            if (spawn == null || spawn.Monster != req.MonsterId) throw GameErrors.Conflict(ErrorCodes.InvalidSpawn);
+            var info = MonsterCatalog.Get(spawn.Monster);
             var range = info.LeashRadius + config.Combat.KillRangeTolerance;
             if (Distance(req.X, req.Z, spawn.X, spawn.Z) > range) throw GameErrors.Conflict(ErrorCodes.OutOfRange);
 
@@ -55,7 +55,7 @@ public static class CombatEndpoints
         });
 
         group.MapPost("/bot-kill", async (BotKillRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config,
-            IRandomSource random, TimeProvider clock, BotService bots) =>
+            IRandomSource random, TimeProvider clock, BotService bots, ForcedOutcomes forced) =>
         {
             GameOps.RequireFinite(req.X, req.Z);
             if (ZoneMap.IsSafeZone(ZoneMap.GetZone(req.X, req.Z))) throw GameErrors.Conflict(ErrorCodes.SafeZone);
@@ -100,7 +100,7 @@ public static class CombatEndpoints
 
                 // 전리품 판정과 이전을 같은 트랜잭션에서 한다.
                 botItems = await db.LoadItemsAsync(OwnerKind.Bot, bot.Id);
-                var roll = DropRules.RollBotLoot(drop, botState, random);
+                var roll = forced.BotLoot(DropRules.RollBotLoot(drop, botState, random));
                 if (!roll.Drops) return;
                 var candidates = botItems.Select(i => new DropCandidate(i.Id, i.EquippedSlot != null)).ToList();
                 var pickedId = DropRules.PickCandidate(candidates, roll.IncludeEquipped, random);
@@ -169,7 +169,7 @@ public static class CombatEndpoints
         });
 
         group.MapPost("/player-death", async (PlayerDeathRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config,
-            IRandomSource random, TimeProvider clock) =>
+            IRandomSource random, TimeProvider clock, ForcedOutcomes forced) =>
         {
             GameOps.RequireFinite(req.X, req.Z);
             if (req.KillerType == EntityKind.Character) throw GameErrors.Validation("killerType 은 Monster, Bot, Guard 중 하나여야 합니다.");
@@ -205,7 +205,7 @@ public static class CombatEndpoints
                 character.Exp -= response.ExpLost;
 
                 // 성향 기반 사망 드랍: 악명일수록 확률이 높고 장착 장비도 떨어질 수 있다.
-                var roll = DropRules.RollDeathDrop(drop, character.Alignment, random);
+                var roll = forced.DeathDrop(DropRules.RollDeathDrop(drop, character.Alignment, random));
                 if (roll.Drops)
                 {
                     var items = await db.LoadItemsAsync(OwnerKind.Character, character.Id);

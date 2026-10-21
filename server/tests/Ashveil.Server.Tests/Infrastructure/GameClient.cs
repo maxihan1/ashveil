@@ -19,9 +19,9 @@ public sealed class GameClient(HttpClient http)
     public string Password { get; } = "password1";
     public TokenResponse? Tokens { get; private set; }
 
-    public async Task SignupAndLoginAsync()
+    public async Task SignupAndLoginAsync(string prefix = "u")
     {
-        Username = "u" + Guid.NewGuid().ToString("N")[..10];
+        Username = prefix + Guid.NewGuid().ToString("N")[..10];
         await PostAsync<SignupResponse>("/auth/signup", new SignupRequest { Username = Username, Password = Password });
         await LoginAsync();
     }
@@ -62,6 +62,20 @@ public sealed class GameClient(HttpClient http)
     {
         var response = await Http.PutAsJsonAsync(url, body, Json);
         if (!response.IsSuccessStatusCode) Assert.Fail($"PUT {url} 실패 {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+    }
+
+    public async Task<T> SendAsync<T>(HttpMethod method, string url, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, url);
+        if (body != null) request.Content = JsonContent.Create(body, options: Json);
+        return await ReadAsync<T>(await Http.SendAsync(request));
+    }
+
+    public async Task<ErrorResponse> SendErrorAsync(HttpMethod method, string url, object? body, HttpStatusCode status, string code)
+    {
+        var request = new HttpRequestMessage(method, url);
+        if (body != null) request.Content = JsonContent.Create(body, options: Json);
+        return await ExpectErrorAsync(await Http.SendAsync(request), status, code);
     }
 
     /// <summary>실패해야 하는 요청을 보내고 HTTP 상태와 에러 코드를 확인한다.</summary>

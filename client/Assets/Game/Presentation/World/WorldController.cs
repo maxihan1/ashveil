@@ -45,11 +45,12 @@ namespace Ashveil.Presentation
             {
                 var character = await GameContext.Api.GetCharacterAsync();
                 var inventory = await GameContext.Api.GetInventoryAsync();
+                var spawns = await GameContext.Api.GetSpawnsAsync();
                 if (this == null) return;
                 GameContext.Player.Reset();
                 GameContext.Player.Apply(character, fillVitals: true);
                 GameContext.Player.Apply(inventory);
-                Build(character);
+                Build(character, spawns);
             }
             catch (ApiException e)
             {
@@ -58,7 +59,7 @@ namespace Ashveil.Presentation
             }
         }
 
-        private void Build(Shared.Dto.CharacterDto character)
+        private void Build(Shared.Dto.CharacterDto character, System.Collections.Generic.List<Shared.Dto.SpawnPointDto> spawns)
         {
             var systems = new GameObject("Systems");
             systems.transform.SetParent(transform, false);
@@ -79,6 +80,7 @@ namespace Ashveil.Presentation
             var monsters = new GameObject("Monsters");
             monsters.transform.SetParent(transform, false);
             WorldServices.Monsters = monsters.AddComponent<MonsterSpawnSystem>();
+            WorldServices.Monsters.Init(spawns);
 
             var bots = new GameObject("Bots");
             bots.transform.SetParent(transform, false);

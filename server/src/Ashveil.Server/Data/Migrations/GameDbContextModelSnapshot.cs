@@ -470,6 +470,37 @@ namespace Ashveil.Server.Data.Migrations
                     b.ToTable("ledger_entries", (string)null);
                 });
 
+            modelBuilder.Entity("Ashveil.Server.Data.MonsterSpawn", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Monster")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("monster");
+
+                    b.Property<float>("X")
+                        .HasColumnType("real")
+                        .HasColumnName("x");
+
+                    b.Property<float>("Z")
+                        .HasColumnType("real")
+                        .HasColumnName("z");
+
+                    b.Property<string>("Zone")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("zone");
+
+                    b.HasKey("Id")
+                        .HasName("pk_monster_spawns");
+
+                    b.ToTable("monster_spawns", (string)null);
+                });
+
             modelBuilder.Entity("Ashveil.Server.Data.PkRecord", b =>
                 {
                     b.Property<long>("Id")

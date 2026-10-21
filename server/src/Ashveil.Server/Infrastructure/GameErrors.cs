@@ -47,6 +47,7 @@ public static class GameErrors
         ErrorCodes.InvalidTarget => "올바르지 않은 대상입니다.",
         ErrorCodes.ItemExpired => "아이템이 사라졌습니다.",
         ErrorCodes.GmDisabled => "GM 기능은 QA 환경에서만 사용할 수 있습니다.",
+        ErrorCodes.AdminDisabled => "어드민 API는 QA 환경에서 Admin:Key 를 설정했을 때만 사용할 수 있습니다.",
         ErrorCodes.NotFound => "대상을 찾을 수 없습니다.",
         _ => "요청을 처리할 수 없습니다.",
     };

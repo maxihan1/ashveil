@@ -96,6 +96,8 @@ namespace Ashveil.Application
 
         public Task<List<BotDto>> GetBotsAsync() => _client.SendAsync<List<BotDto>>("GET", "/bots");
 
+        public Task<List<SpawnPointDto>> GetSpawnsAsync() => _client.SendAsync<List<SpawnPointDto>>("GET", "/world/spawns");
+
         // GM (QA 서버 전용)
         public Task<CharacterDto> GmGoldAsync(long amount) => _client.SendAsync<CharacterDto>("POST", "/gm/gold", new GmGoldRequest { Amount = amount });
 

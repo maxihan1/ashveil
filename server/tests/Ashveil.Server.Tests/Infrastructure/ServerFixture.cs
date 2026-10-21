@@ -33,6 +33,7 @@ public class ServerFixture : IAsyncLifetime
             b.UseEnvironment(EnvironmentName);
             b.UseSetting("ConnectionStrings:Game", connection);
             b.UseSetting("Jwt:Key", "integration-test-signing-key-0123456789abcdef");
+            b.UseSetting("Admin:Key", AdminKey);
             b.ConfigureServices(s =>
             {
                 s.RemoveAll<IRandomSource>();
@@ -53,13 +54,24 @@ public class ServerFixture : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public const string AdminKey = "integration-test-admin-key";
+
     public GameClient NewClient() => new(Factory.CreateClient());
 
-    /// <summary>새 계정 + 캐릭터를 만들고 인증·캐릭터 헤더가 붙은 클라이언트를 돌려준다.</summary>
-    public async Task<(GameClient Client, Shared.Dto.CharacterDto Character)> NewPlayerAsync(ClassType classType = ClassType.Warrior)
+    /// <summary>X-Admin-Key 가 붙은 어드민 API 클라이언트.</summary>
+    public GameClient NewAdminClient()
     {
         var client = NewClient();
-        await client.SignupAndLoginAsync();
+        client.Http.DefaultRequestHeaders.Add("X-Admin-Key", AdminKey);
+        return client;
+    }
+
+    /// <summary>새 계정 + 캐릭터를 만들고 인증·캐릭터 헤더가 붙은 클라이언트를 돌려준다.</summary>
+    public async Task<(GameClient Client, Shared.Dto.CharacterDto Character)> NewPlayerAsync(ClassType classType = ClassType.Warrior,
+        string usernamePrefix = "u")
+    {
+        var client = NewClient();
+        await client.SignupAndLoginAsync(usernamePrefix);
         var character = await client.CreateCharacterAsync(classType);
         client.UseCharacter(character.Id);
         return (client, character);

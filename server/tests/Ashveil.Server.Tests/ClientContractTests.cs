@@ -57,6 +57,12 @@ public class ClientContractTests(ServerFixture server) : IClassFixture<ServerFix
         Assert.All(bots, b => Assert.Equal(ZoneId.Beginner, b.Zone));
         Assert.Contains(bots, b => b.Temperament == Temperament.Aggressive);
 
+        var spawns = await Read<List<SpawnPointDto>>(await http.GetAsync("/world/spawns"));
+        var b01 = spawns.Single(s => s.Id == "B01");
+        Assert.Equal(MonsterType.Imp, b01.Monster);
+        Assert.Equal(ZoneId.Beginner, b01.Zone);
+        Assert.Equal(34.8f, b01.X);
+
         await client.GmAlignmentAsync(-700);
         server.Random.Enqueue(0.0, 0.0);
         var death = await Read<PlayerDeathResponse>(await http.PostAsync("/combat/player-death",

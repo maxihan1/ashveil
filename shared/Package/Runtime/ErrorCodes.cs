@@ -34,6 +34,7 @@ namespace Ashveil.Shared
         public const string ItemExpired = "ITEM_EXPIRED";
 
         public const string GmDisabled = "GM_DISABLED";
+        public const string AdminDisabled = "ADMIN_DISABLED";
         public const string Internal = "INTERNAL_ERROR";
 
         /// <summary>클라이언트 전용. 서버에 연결하지 못했을 때.</summary>

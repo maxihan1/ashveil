@@ -1,4 +1,4 @@
-// EF Core 엔티티 (계정, 캐릭터, 봇, 아이템, 바닥 아이템, 원장, 이력)
+// EF Core 엔티티 (계정, 캐릭터, 봇, 아이템, 바닥 아이템, 원장, 이력, 몬스터 스폰)
 using Ashveil.Shared;
 
 namespace Ashveil.Server.Data;
@@ -142,4 +142,14 @@ public class AlignmentHistory
     public int After { get; set; }
     public string Reason { get; set; } = "";
     public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>몬스터 스폰 지점. 비어 있으면 SpawnTable 기본값으로 채운다.</summary>
+public class MonsterSpawn
+{
+    public string Id { get; set; } = "";
+    public ZoneId Zone { get; set; }
+    public MonsterType Monster { get; set; }
+    public float X { get; set; }
+    public float Z { get; set; }
 }

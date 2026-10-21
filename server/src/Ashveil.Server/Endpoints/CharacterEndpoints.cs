@@ -60,10 +60,7 @@ public static class CharacterEndpoints
                     await db.SaveChangesAsync();
 
                     db.ChangeGold(character, ItemCatalog.StarterGold, LedgerReasons.CharacterCreated, "Character", character.Id.ToString(), now);
-                    db.Items.AddRange(
-                        Starter(character, ItemCatalog.StarterWeapon(req.ClassType), 1, EquipSlot.Weapon, now),
-                        Starter(character, ItemCatalog.StarterArmor, 1, EquipSlot.Armor, now),
-                        Starter(character, ItemCatalog.PotionHpSmall, ItemCatalog.StarterPotions, null, now));
+                    db.AddStarterItems(character, now);
                 });
             }
             catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
@@ -169,12 +166,6 @@ public static class CharacterEndpoints
             };
         });
     }
-
-    private static Item Starter(Character c, string templateId, int quantity, EquipSlot? slot, DateTime now) => new()
-    {
-        TemplateId = templateId, Quantity = quantity, OwnerKind = OwnerKind.Character, OwnerId = c.Id,
-        EquippedSlot = slot, CreatedAt = now,
-    };
 
     private static async Task<EquipResponse> ChangeEquipAsync(GameDbContext db, long characterId, long accountId, long itemId, bool equip)
     {

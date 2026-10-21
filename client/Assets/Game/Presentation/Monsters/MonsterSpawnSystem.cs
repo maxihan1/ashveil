@@ -1,4 +1,4 @@
-// SpawnTable 전 지점의 몬스터 생성·리젠·거리 기반 활성화(풀링)와 처치 보고 연결
+// 서버가 내려준 스폰 표의 몬스터 생성·리젠·거리 기반 활성화(풀링)와 처치 보고 연결
 using System.Collections.Generic;
 using Ashveil.Shared;
 using UnityEngine;
@@ -32,9 +32,11 @@ namespace Ashveil.Presentation
             }
         }
 
-        private void Awake()
+        /// <summary>월드 입장 때 서버에서 받은 스폰 표로 슬롯을 만든다(어드민이 바꾼 표는 다음 입장 때 반영).</summary>
+        public void Init(IEnumerable<Ashveil.Shared.Dto.SpawnPointDto> spawns)
         {
-            foreach (var spawn in SpawnTable.All) _slots.Add(new Slot { Spawn = spawn });
+            _slots.Clear();
+            foreach (var s in spawns) _slots.Add(new Slot { Spawn = new SpawnPoint(s.Id, s.Zone, s.Monster, s.X, s.Z) });
         }
 
         private void Update()

@@ -78,7 +78,7 @@ public static class ShopEndpoints
         });
 
         app.MapPost("/enhance", async (EnhanceRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config,
-            IRandomSource random, TimeProvider clock) =>
+            IRandomSource random, TimeProvider clock, ForcedOutcomes forced) =>
         {
             var now = clock.GetUtcNow().UtcDateTime;
             var enhance = config.Enhance;
@@ -104,7 +104,10 @@ public static class ShopEndpoints
                 db.ChangeGold(character, -cost, LedgerReasons.Enhance, "Item", target.Id.ToString(), now);
 
                 var from = target.EnhanceLevel;
-                var result = EnhanceRules.Roll(enhance, from, random);
+                // 안전 구간(+SafeLevel 까지)은 항상 성공이라 어드민이 고정한 결과를 쓰지 않는다.
+                var result = from + 1 > enhance.SafeLevel && forced.TryNextEnhance(out var fixedResult)
+                    ? fixedResult
+                    : EnhanceRules.Roll(enhance, from, random);
                 if (result == EnhanceResult.Success) target.EnhanceLevel += 1;
                 if (result == EnhanceResult.Destroy) db.Items.Remove(target);
 
@@ -128,11 +131,7 @@ public static class ShopEndpoints
             var entries = await db.LedgerEntries.AsNoTracking()
                 .Where(e => e.CharacterId == character.Id)
                 .OrderByDescending(e => e.Id).Take(take).ToListAsync();
-            return entries.Select(e => new LedgerEntryDto
-            {
-                Id = e.Id, Reason = e.Reason, Delta = e.Delta, BalanceAfter = e.BalanceAfter,
-                RelatedType = e.RelatedType, RelatedId = e.RelatedId, CreatedAt = e.CreatedAt,
-            }).ToList();
+            return entries.Select(Map.Ledger).ToList();
         }).WithTags("Currency").RequireAuthorization();
     }
 }

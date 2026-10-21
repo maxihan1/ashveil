@@ -150,6 +150,21 @@ public static class GameOps
         return ground;
     }
 
+    /// <summary>새 캐릭터 기본 장비(직업 무기·갑옷 장착)와 물약.</summary>
+    public static void AddStarterItems(this GameDbContext db, Character c, DateTime now)
+    {
+        db.Items.AddRange(
+            Starter(c, ItemCatalog.StarterWeapon(c.ClassType), 1, EquipSlot.Weapon, now),
+            Starter(c, ItemCatalog.StarterArmor, 1, EquipSlot.Armor, now),
+            Starter(c, ItemCatalog.PotionHpSmall, ItemCatalog.StarterPotions, null, now));
+    }
+
+    private static Item Starter(Character c, string templateId, int quantity, EquipSlot? slot, DateTime now) => new()
+    {
+        TemplateId = templateId, Quantity = quantity, OwnerKind = OwnerKind.Character, OwnerId = c.Id,
+        EquippedSlot = slot, CreatedAt = now,
+    };
+
     public static Stats ComputeStats(ClassType classType, int level, IEnumerable<Item> items) =>
         StatRules.Compute(classType, level,
             items.Where(i => i.EquippedSlot != null).Select(i => new EquippedItem(i.TemplateId, i.EnhanceLevel)));

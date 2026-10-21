@@ -1,4 +1,4 @@
-// 서버 진입점: DI 구성, JWT 인증, OpenAPI, 마이그레이션·봇 시드, 엔드포인트 등록
+// 서버 진입점: DI 구성, JWT 인증, OpenAPI, 마이그레이션·봇·스폰 시드, 엔드포인트 등록
 using System.Text.Json.Serialization;
 using Ashveil.Server.Data;
 using Ashveil.Server.Endpoints;
@@ -27,6 +27,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IRandomSource, SharedRandomSource>();
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton<ForcedOutcomes>();
 builder.Services.AddScoped<BotService>();
 
 builder.Services.AddDbContext<GameDbContext>((sp, o) => o
@@ -90,6 +91,8 @@ app.MapShopEndpoints();
 app.MapCombatEndpoints();
 app.MapWorldEndpoints();
 app.MapGmEndpoints();
+app.MapAdminEndpoints();
+app.MapBackoffice();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -97,6 +100,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
     await db.Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<BotService>().SeedIfEmptyAsync();
+    await SpawnService.SeedIfEmptyAsync(db);
 }
 
 app.Run();

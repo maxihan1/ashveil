@@ -36,20 +36,13 @@ public static class GmEndpoints
 
         gm.MapPost("/item", async (GmItemRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config, TimeProvider clock) =>
         {
-            if (!ItemCatalog.TryGet(req.TemplateId, out var template)) throw GameErrors.NotFound("아이템 템플릿");
-            if (req.Quantity < 1 || req.Quantity > (template.Stackable ? ItemCatalog.MaxStack : InventoryRules.Capacity))
-                throw GameErrors.Validation("수량이 올바르지 않습니다.");
-            if (req.EnhanceLevel < 0 || req.EnhanceLevel > config.Enhance.MaxLevel) throw GameErrors.Validation("강화 수치가 올바르지 않습니다.");
-
+            var template = ValidateItem(req, config);
             var now = clock.GetUtcNow().UtcDateTime;
             Character character = null!;
             await db.InTransactionAsync(async () =>
             {
                 character = await db.LockOwnedCharacterAsync(http.CharacterId(), http.AccountId());
-                var items = await db.LoadItemsAsync(OwnerKind.Character, character.Id);
-                var plan = GameOps.Plan(items, template.Id, req.Quantity);
-                if (!plan.Fits) throw GameErrors.Conflict(ErrorCodes.InventoryFull);
-                db.AddNewItems(OwnerKind.Character, character.Id, items, plan, template.Id, template.IsEquipment ? req.EnhanceLevel : 0, now);
+                await GiveItemAsync(db, character, template, req, now);
             });
             return await db.InventoryDtoAsync(character);
         });
@@ -68,25 +61,7 @@ public static class GmEndpoints
             return await db.CharacterDtoAsync(character, now);
         });
 
-        gm.MapPost("/enhance-rate", (GmEnhanceRateRequest req, RuntimeGameConfig config) =>
-        {
-            if (req.Reset || req.Rates == null)
-            {
-                config.SetEnhanceRates(null);
-                return config.Enhance;
-            }
-            foreach (var r in req.Rates)
-            {
-                var sum = r.Success + r.Fail + r.Destroy;
-                if (r.TargetLevel < 1 || r.TargetLevel > config.Enhance.MaxLevel || r.Success < 0 || r.Fail < 0 || r.Destroy < 0 || Math.Abs(sum - 1) > 0.0001)
-                    throw GameErrors.Validation($"+{r.TargetLevel} 확률이 올바르지 않습니다. 성공+실패+파괴 = 1 이어야 합니다.");
-            }
-            // 지정한 수치만 바꾸고 나머지는 현재 값을 유지한다.
-            var merged = config.Enhance.Rates.Where(r => req.Rates.All(n => n.TargetLevel != r.TargetLevel)).Concat(req.Rates)
-                .OrderBy(r => r.TargetLevel).ToList();
-            config.SetEnhanceRates(merged);
-            return config.Enhance;
-        });
+        gm.MapPost("/enhance-rate", (GmEnhanceRateRequest req, RuntimeGameConfig config) => ApplyEnhanceRates(req, config));
 
         gm.MapPost("/bot/reset", async (GmBotResetRequest req, GameDbContext db, BotService bots) =>
         {
@@ -110,15 +85,57 @@ public static class GmEndpoints
             return await db.CharacterDtoAsync(character, now);
         });
 
-        gm.MapPost("/drop-rate", (GmDropRateRequest req, RuntimeGameConfig config) =>
-        {
-            static bool Valid(double? p) => p is null or (>= 0 and <= 1);
-            if (!Valid(req.BotLootChance) || !Valid(req.BotLootChanceChaotic) || req.DeathDrop?.Any(t => !Valid(t.Chance)) == true)
-                throw GameErrors.Validation("확률은 0~1 사이여야 합니다.");
-            config.SetDrop(req.BotLootChance, req.BotLootChanceChaotic, req.DeathDrop, req.Reset);
-            return config.Drop;
-        });
+        gm.MapPost("/drop-rate", (GmDropRateRequest req, RuntimeGameConfig config) => ApplyDropRates(req, config));
 
         gm.MapGet("/config", (RuntimeGameConfig config) => new GmConfigResponse { Enhance = config.Enhance, Drop = config.Drop });
+    }
+
+    // 아래는 어드민 API 와 함께 쓰는 검증·적용 로직이다.
+
+    public static ItemTemplate ValidateItem(GmItemRequest req, RuntimeGameConfig config)
+    {
+        if (req.TemplateId == null || !ItemCatalog.TryGet(req.TemplateId, out var template)) throw GameErrors.NotFound("아이템 템플릿");
+        if (req.Quantity < 1 || req.Quantity > (template.Stackable ? ItemCatalog.MaxStack : InventoryRules.Capacity))
+            throw GameErrors.Validation("수량이 올바르지 않습니다.");
+        if (req.EnhanceLevel < 0 || req.EnhanceLevel > config.Enhance.MaxLevel) throw GameErrors.Validation("강화 수치가 올바르지 않습니다.");
+        return template;
+    }
+
+    /// <summary>잠근 캐릭터의 가방에 아이템을 넣는다. 자리가 없으면 INVENTORY_FULL.</summary>
+    public static async Task GiveItemAsync(GameDbContext db, Character character, ItemTemplate template, GmItemRequest req, DateTime now)
+    {
+        var items = await db.LoadItemsAsync(OwnerKind.Character, character.Id);
+        var plan = GameOps.Plan(items, template.Id, req.Quantity);
+        if (!plan.Fits) throw GameErrors.Conflict(ErrorCodes.InventoryFull);
+        db.AddNewItems(OwnerKind.Character, character.Id, items, plan, template.Id, template.IsEquipment ? req.EnhanceLevel : 0, now);
+    }
+
+    public static EnhanceConfig ApplyEnhanceRates(GmEnhanceRateRequest req, RuntimeGameConfig config)
+    {
+        if (req.Reset || req.Rates == null)
+        {
+            config.SetEnhanceRates(null);
+            return config.Enhance;
+        }
+        foreach (var r in req.Rates)
+        {
+            var sum = r.Success + r.Fail + r.Destroy;
+            if (r.TargetLevel < 1 || r.TargetLevel > config.Enhance.MaxLevel || r.Success < 0 || r.Fail < 0 || r.Destroy < 0 || Math.Abs(sum - 1) > 0.0001)
+                throw GameErrors.Validation($"+{r.TargetLevel} 확률이 올바르지 않습니다. 성공+실패+파괴 = 1 이어야 합니다.");
+        }
+        // 지정한 수치만 바꾸고 나머지는 현재 값을 유지한다.
+        var merged = config.Enhance.Rates.Where(r => req.Rates.All(n => n.TargetLevel != r.TargetLevel)).Concat(req.Rates)
+            .OrderBy(r => r.TargetLevel).ToList();
+        config.SetEnhanceRates(merged);
+        return config.Enhance;
+    }
+
+    public static DropConfig ApplyDropRates(GmDropRateRequest req, RuntimeGameConfig config)
+    {
+        static bool Valid(double? p) => p is null or (>= 0 and <= 1);
+        if (!Valid(req.BotLootChance) || !Valid(req.BotLootChanceChaotic) || req.DeathDrop?.Any(t => !Valid(t.Chance)) == true)
+            throw GameErrors.Validation("확률은 0~1 사이여야 합니다.");
+        config.SetDrop(req.BotLootChance, req.BotLootChanceChaotic, req.DeathDrop, req.Reset);
+        return config.Drop;
     }
 }

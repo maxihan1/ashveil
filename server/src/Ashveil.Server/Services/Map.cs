@@ -89,4 +89,10 @@ public static class Map
         Z = g.Z,
         ExpiresAt = g.ExpiresAt,
     };
+
+    public static LedgerEntryDto Ledger(LedgerEntry e) => new()
+    {
+        Id = e.Id, Reason = e.Reason, Delta = e.Delta, BalanceAfter = e.BalanceAfter,
+        RelatedType = e.RelatedType, RelatedId = e.RelatedId, CreatedAt = e.CreatedAt,
+    };
 }

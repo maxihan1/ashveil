@@ -1,4 +1,4 @@
-// 바닥 아이템 조회·줍기(플레이어·봇 공용)와 구역별 봇 목록 API
+// 몬스터 스폰 표, 바닥 아이템 조회·줍기(플레이어·봇 공용)와 구역별 봇 목록 API
 using Ashveil.Server.Data;
 using Ashveil.Server.Infrastructure;
 using Ashveil.Server.Services;
@@ -13,6 +13,12 @@ public static class WorldEndpoints
     public static void MapWorldEndpoints(this IEndpointRouteBuilder app)
     {
         var world = app.MapGroup("/world").WithTags("World").RequireAuthorization();
+
+        world.MapGet("/spawns", async (GameDbContext db) =>
+        {
+            var list = await db.MonsterSpawns.AsNoTracking().OrderBy(s => s.Id).ToListAsync();
+            return list.Select(SpawnService.ToDto).ToList();
+        });
 
         world.MapGet("/ground-items", async (ZoneId? zone, GameDbContext db, TimeProvider clock) =>
         {
