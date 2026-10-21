@@ -10,7 +10,7 @@ namespace Ashveil.Presentation
     public sealed class MinimapView : MonoBehaviour
     {
         private const float RangeMeters = 60f;
-        private const float SizePixels = 280f;
+        public const float SizePixels = 280f;
         private const float RefreshSeconds = 0.2f;
 
         private RectTransform _dotLayer;

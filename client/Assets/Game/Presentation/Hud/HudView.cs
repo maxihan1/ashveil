@@ -67,82 +67,96 @@ namespace Ashveil.Presentation
         {
             var root = Ui.Rect(_canvas);
 
-            // 좌상단 상태
+            // 좌상단 상태: 이름·레벨, HP·MP·EXP, 성향·골드
             var status = Ui.Panel(root, "StatusPanel", new Color(0, 0, 0, 0.45f));
-            Ui.Place(status.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(560, 230));
-            _name = Ui.Label(status.transform, "NameText", "", 34);
-            Ui.Place(_name.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -12), new Vector2(380, 46));
-            _level = Ui.Label(status.transform, "LevelText", "", 30, TextAnchor.MiddleRight, UiColors.Gold);
-            Ui.Place(_level.rectTransform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -12), new Vector2(160, 46));
+            Ui.Place(status.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(500, 196));
+            _name = Ui.Label(status.transform, "NameText", "", 30);
+            Ui.Place(_name.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(16, -6), new Vector2(340, 42));
+            _level = Ui.Label(status.transform, "LevelText", "", 28, TextAnchor.MiddleRight, UiColors.Gold);
+            Ui.Place(_level.rectTransform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-16, -6), new Vector2(140, 42));
             _hp = Ui.Bar(status.transform, "HpBar", UiColors.Hp);
-            Ui.Place(_hp.Root, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -66), new Vector2(520, 40));
+            Ui.Place(_hp.Root, new Vector2(0, 1), new Vector2(0, 1), new Vector2(16, -52), new Vector2(468, 34));
             _mp = Ui.Bar(status.transform, "MpBar", UiColors.Mp);
-            Ui.Place(_mp.Root, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -114), new Vector2(520, 34));
+            Ui.Place(_mp.Root, new Vector2(0, 1), new Vector2(0, 1), new Vector2(16, -92), new Vector2(468, 28));
             _exp = Ui.Bar(status.transform, "ExpBar", UiColors.Exp);
-            Ui.Place(_exp.Root, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -156), new Vector2(520, 24));
-            _alignment = Ui.Label(status.transform, "AlignmentText", "", 26);
-            Ui.Place(_alignment.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -186), new Vector2(520, 36));
-
-            // 상단 가운데: 골드·구역
-            var top = Ui.Panel(root, "TopBar", new Color(0, 0, 0, 0.45f));
-            Ui.Place(top.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -20), new Vector2(620, 70));
-            var coin = Ui.Node(top.transform, "GoldIcon").gameObject.AddComponent<RawImage>();
+            Ui.Place(_exp.Root, new Vector2(0, 1), new Vector2(0, 1), new Vector2(16, -126), new Vector2(468, 20));
+            _alignment = Ui.Label(status.transform, "AlignmentText", "", 24);
+            Ui.Place(_alignment.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(16, -152), new Vector2(240, 36));
+            var coin = Ui.Node(status.transform, "GoldIcon").gameObject.AddComponent<RawImage>();
             coin.texture = GameResources.Icon("gold");
-            Ui.Place(coin.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(16, 0), new Vector2(48, 48));
-            _gold = Ui.Label(top.transform, "GoldText", "0", 32, TextAnchor.MiddleLeft, UiColors.Gold);
-            Ui.Place(_gold.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(76, 0), new Vector2(260, 60));
-            _zone = Ui.Label(top.transform, "ZoneText", "", 28, TextAnchor.MiddleRight);
-            Ui.Place(_zone.rectTransform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-16, 0), new Vector2(300, 60));
+            Ui.Place(coin.rectTransform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-196, -156), new Vector2(30, 30));
+            _gold = Ui.Label(status.transform, "GoldText", "0", 26, TextAnchor.MiddleRight, UiColors.Gold);
+            Ui.Place(_gold.rectTransform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-16, -152), new Vector2(176, 36));
 
-            // 대상 정보
+            // 상단 가운데: 선택한 대상
             _targetFrame = Ui.Panel(root, "TargetFrame", new Color(0, 0, 0, 0.5f)).rectTransform;
-            Ui.Place(_targetFrame, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -100), new Vector2(560, 90));
-            _targetName = Ui.Label(_targetFrame, "TargetName", "", 28, TextAnchor.MiddleCenter);
-            Ui.Place(_targetName.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(540, 40));
+            Ui.Place(_targetFrame, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -20), new Vector2(460, 84));
+            _targetName = Ui.Label(_targetFrame, "TargetName", "", 26, TextAnchor.MiddleCenter);
+            Ui.Place(_targetName.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(440, 36));
             _targetHp = Ui.Bar(_targetFrame, "TargetHpBar", UiColors.Hp);
-            Ui.Place(_targetHp.Root, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 10), new Vector2(520, 30));
+            Ui.Place(_targetHp.Root, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 10), new Vector2(420, 28));
             _targetFrame.gameObject.SetActive(false);
 
-            // 미니맵 + 메뉴 버튼
+            // 우상단: 미니맵, 그 아래 구역 이름, 왼쪽에 메뉴 한 줄
             MinimapView.Create(root);
-            var menu = Ui.Place(Ui.Node(root, "MenuButtons"), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -330), new Vector2(300, 90));
+            _zone = Ui.Label(root, "ZoneText", "", 26, TextAnchor.MiddleCenter);
+            Ui.Place(_zone.rectTransform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -334), new Vector2(MinimapView.SizePixels, 34));
+            var menu = Ui.Place(Ui.Node(root, "MenuButtons"), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-MinimapView.SizePixels - 40, -20), new Vector2(480, 76));
             var layout = menu.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 10;
-            layout.childForceExpandWidth = true;
-            layout.childControlWidth = true;
+            layout.spacing = 8;
+            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.childForceExpandWidth = false;
+            layout.childControlWidth = false;
             layout.childControlHeight = true;
-            Ui.Button(menu, "InventoryButton", "가방", OpenInventory, null, 28);
-            Ui.Button(menu, "CharacterButton", "정보", OpenCharacterInfo, null, 28);
+            MenuButton(menu, "InventoryButton", "가방", OpenInventory, null);
+            MenuButton(menu, "CharacterButton", "정보", OpenCharacterInfo, null);
 #if QA_BUILD
-            Ui.Button(menu, "GmButton", "GM", () => GmConsole.Open(_panelLayer), UiColors.ButtonDanger, 28);
+            MenuButton(menu, "GmButton", "GM", () => GmConsole.Open(_panelLayer), UiColors.ButtonDanger);
 #endif
-            var exit = Ui.Button(root, "ExitButton", "나가기", ExitToCharacterSelect, null, 24);
-            Ui.Place(Ui.Rect(exit), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -430), new Vector2(140, 60));
+            MenuButton(menu, "ExitButton", "나가기", ExitToCharacterSelect, null);
 
-            // 조이스틱
+            // 좌하단 조이스틱
             _joystick = VirtualJoystick.Create(root);
 
-            // 우하단 행동 버튼
-            RoundButton(root, "AttackButton", "공격", new Vector2(-60, 60), 230, OnAttack, UiColors.ButtonDanger);
-            var skill1 = RoundButton(root, "Skill1Button", Controller.Profile.Skill1.Name, new Vector2(-320, 60), 150, () => Controller.UseSkill(0), UiColors.Button);
-            var skill2 = RoundButton(root, "Skill2Button", Controller.Profile.Skill2.Name, new Vector2(-60, 320), 150, () => Controller.UseSkill(1), UiColors.Button);
+            // 우하단: 공격 버튼을 중심으로 스킬·물약을 원호로, 그 위 오른쪽 끝에 자동·PK·귀환 토글
+            var attack = new Vector2(-170, 170);
+            ArcButton(root, "AttackButton", "공격", attack, 0, 0, 230, OnAttack, UiColors.ButtonDanger);
+            var skill1 = ArcButton(root, "Skill1Button", Controller.Profile.Skill1.Name, attack, 180, 235, 140, () => Controller.UseSkill(0), UiColors.Button);
+            var skill2 = ArcButton(root, "Skill2Button", Controller.Profile.Skill2.Name, attack, 135, 235, 140, () => Controller.UseSkill(1), UiColors.Button);
             _skillCooldownTexts = new[] { CooldownLabel(skill1), CooldownLabel(skill2) };
-            var potion = RoundButton(root, "PotionButton", "물약", new Vector2(-500, 60), 130, () => Controller.UsePotion(), new Color(0.55f, 0.15f, 0.2f));
-            _potionCount = Ui.Label(potion.transform, "CountText", "0", 24, TextAnchor.LowerRight, UiColors.Text);
-            Ui.Stretch(_potionCount.rectTransform, 0, 18, 0, 10);
-            _autoHunt = RoundButton(root, "AutoHuntButton", "자동", new Vector2(-260, 300), 120, ToggleAutoHunt, UiColors.Button);
-            _pkMode = RoundButton(root, "PkModeButton", "PK", new Vector2(-380, 230), 110, TogglePk, UiColors.Button);
-            RoundButton(root, "TownButton", "귀환", new Vector2(-60, 500), 110, () => Controller.ReturnToTown(), new Color(0.2f, 0.45f, 0.35f));
+            var potion = ArcButton(root, "PotionButton", "물약", attack, 90, 230, 120, () => Controller.UsePotion(), new Color(0.55f, 0.15f, 0.2f));
+            _potionCount = Ui.Label(potion.transform, "CountText", "0", 22, TextAnchor.LowerCenter, UiColors.Text);
+            Ui.Stretch(_potionCount.rectTransform, 0, 10, 0, 0);
+            _autoHunt = ToggleButton(root, "AutoHuntButton", "자동", 500, ToggleAutoHunt, UiColors.Button);
+            _pkMode = ToggleButton(root, "PkModeButton", "PK", 576, TogglePk, UiColors.Button);
+            ToggleButton(root, "TownButton", "귀환", 652, () => Controller.ReturnToTown(), new Color(0.2f, 0.45f, 0.35f));
 
             _panelLayer = Ui.Stretch(Ui.Node(root, "PanelLayer"));
         }
 
-        private static Button RoundButton(Transform parent, string name, string label, Vector2 position, float size, System.Action onClick, Color color)
+        /// <summary>우하단 기준 center 에서 angle(도) 방향으로 radius 떨어진 곳에 둥근 버튼을 둔다.</summary>
+        private static Button ArcButton(Transform parent, string name, string label, Vector2 center, float angle, float radius, float size, System.Action onClick, Color color)
         {
             var button = Ui.Button(parent, name, label, onClick, color, size > 180 ? 40 : 26);
             button.image.sprite = Ui.Circle;
-            Ui.Place(Ui.Rect(button), new Vector2(1, 0), new Vector2(1, 0), position, new Vector2(size, size));
+            var rad = angle * Mathf.Deg2Rad;
+            var position = center + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * radius;
+            Ui.Place(Ui.Rect(button), new Vector2(1, 0), new Vector2(0.5f, 0.5f), position, new Vector2(size, size));
             return button;
+        }
+
+        /// <summary>오른쪽 끝 세로 줄의 토글 버튼. y 는 화면 아래에서 버튼 가운데까지 거리.</summary>
+        private static Button ToggleButton(Transform parent, string name, string label, float y, System.Action onClick, Color color)
+        {
+            var button = Ui.Button(parent, name, label, onClick, color, 26);
+            Ui.Place(Ui.Rect(button), new Vector2(1, 0), new Vector2(1, 0.5f), new Vector2(-20, y), new Vector2(150, 66));
+            return button;
+        }
+
+        private static void MenuButton(Transform parent, string name, string label, System.Action onClick, Color? color)
+        {
+            var button = Ui.Button(parent, name, label, onClick, color, 26);
+            Ui.Rect(button).sizeDelta = new Vector2(96, 76); // 16:9 화면에서도 대상 창과 겹치지 않는 폭
         }
 
         private static Text CooldownLabel(Button button)
