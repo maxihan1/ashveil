@@ -52,4 +52,4 @@ QA 자동화 플랫폼(Test Hub)이 테스트할 "고객사 게임" 역할을 �
 | Unity PlayMode | `client/Assets/Tests/PlayMode` | GameCI |
 | AltTester 스모크 | `qa-tests/` | 폰 연결 후 `mvn test` |
 
-라이선스·출처는 [ThirdPartyNotices](ThirdPartyNotices/README.md). 리니지(NCSoft)의 이름·고유명사·리소스는 쓰지 않는다.
+이 저장소의 코드는 [GPL-3.0](LICENSE)이다(QA 빌드에 GPL-3.0 인 AltTester SDK 가 들어가기 때문, D-35). Boss Room 아트, CC0 에셋, 나눔고딕 등 외부 에셋은 각자의 라이선스를 따른다. 라이선스·출처는 [ThirdPartyNotices](ThirdPartyNotices/README.md). 리니지(NCSoft)의 이름·고유명사·리소스는 쓰지 않는다.

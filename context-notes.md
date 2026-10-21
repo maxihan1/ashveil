@@ -26,3 +26,4 @@
 - 사용자 요청으로 저장소를 공개로 바꿨다. 공개 전 점검에서 비밀값은 없었다(개발용 기본값만). 커밋 작성자 이메일은 공개된다. 공개 저장소는 Actions 사용 시간이 무료이고, 아티팩트(APK)는 GitHub 에 로그인한 누구나 받을 수 있다.
 - QA APK 에는 AltTester SDK(GPL-3.0)가 들어간다. AltTester 문서는 SDK 가 든 앱을 배포하면 그 앱에도 GPL-3.0 을 적용해야 한다고 한다. 공개 아티팩트도 배포에 해당하므로 처리 방법을 사용자에게 물었다(답변 대기).
 - Unity Personal 의 `.ulf` 경로가 막혀서 계정 로그인 방식으로 바꿨다(D-34). GameCI cli 의 personal 방식은 2026-09 에 나온 새 기능이라, 첫 실행 로그에서 활성화 단계(Licensing method: personal)를 먼저 확인한다.
+- 사용자가 GPL-3.0 LICENSE 추가를 골랐다(D-35). 첫 GameCI 테스트 실행에서 Personal 활성화, PlayMode 4개, EditMode 27개가 통과했다. 테스트 액션의 coverageEnabled: false 입력은 game-ci CLI 가 거부해서 GAME_CI_COVERAGE_ENABLED 환경 변수로 바꿨다.
