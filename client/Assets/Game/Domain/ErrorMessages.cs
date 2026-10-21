@@ -34,6 +34,7 @@ namespace Ashveil.Domain
             [ErrorCodes.InvalidTarget] = "공격할 수 없는 대상입니다.",
             [ErrorCodes.ItemExpired] = "아이템이 사라졌습니다.",
             [ErrorCodes.GmDisabled] = "GM 기능은 QA 서버에서만 쓸 수 있습니다.",
+            [ErrorCodes.AdminDisabled] = "어드민 기능은 QA 서버에서만 쓸 수 있습니다.",
             [ErrorCodes.Internal] = "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
             [ErrorCodes.NetworkError] = "서버에 연결할 수 없습니다. 네트워크와 서버 주소를 확인해 주세요.",
         };
