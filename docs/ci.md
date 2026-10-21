@@ -35,6 +35,7 @@ Unity 는 CI 안에서도 활성화된 라이선스가 있어야 실행된다. �
 | 종류 | 이름 | 용도 |
 |---|---|---|
 | Secret | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEYALIAS_NAME`, `ANDROID_KEYALIAS_PASS` | Release 서명 키. 없으면 디버그 서명으로 빌드한다 |
+| Secret | `ANDROID_QA_KEYSTORE_BASE64`, `ANDROID_QA_KEYSTORE_PASS`, `ANDROID_QA_KEYALIAS_NAME`, `ANDROID_QA_KEYALIAS_PASS` | QA 서명 키(등록됨, 2026-10-21). 빌드마다 같은 키라 기존 앱을 지우지 않고 덮어 설치된다. 원본은 만든 Mac 의 `~/.config/ashveil/qa-signing/` 에 있다 |
 | Variable | `GAME_SERVER_URL` | APK 에 넣을 기본 서버 주소 (예: `http://192.168.0.10:8080`). 앱에서 바꿀 수도 있다 |
 | Variable | `ALTTESTER_HOST`, `ALTTESTER_PORT`, `ALTTESTER_APP_NAME` | QA 빌드의 AltTester 서버 주소·포트·앱 이름 (기본 `127.0.0.1`, `13000`, `ashveil`) |
 

@@ -181,11 +181,12 @@ jobs:
           buildMethod: Ashveil.Editor.CiBuild.BuildAndroid
           versioning: None
           allowDirtyBuild: true
-          androidKeystoreName: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && 'ashveil.keystore' || '' }}
-          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
-          androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
-          androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          # QA 는 ANDROID_QA_* (빌드마다 같은 키라 덮어 설치가 된다), Release 는 ANDROID_KEYSTORE_*. 없으면 디버그 서명.
+          androidKeystoreName: ${{ (matrix.variant == 'qa' && secrets.ANDROID_QA_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64) != '' && 'ashveil.keystore' || '' }}
+          androidKeystoreBase64: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYSTORE_PASS || secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYALIAS_NAME || secrets.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasPass: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYALIAS_PASS || secrets.ANDROID_KEYALIAS_PASS }}
           customParameters: >-
             -buildVariant ${{ matrix.variant }}
             -buildNumber ${{ github.run_number }}

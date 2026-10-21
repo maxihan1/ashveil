@@ -32,3 +32,4 @@
 - 사용자 요청으로 어드민 API·백오피스·서버 스폰 표를 만들었다(D-36~D-38). GM API 는 본인 캐릭터 전용이라 그대로 둔다.
 - CI 디버그 서명 키가 빌드마다 달라 새 QA APK 를 설치하려면 기존 앱을 지워야 한다(INSTALL_FAILED_UPDATE_INCOMPATIBLE). 고정하려면 QA 용 키스토어를 Secrets 에 넣는다.
 - Release 빌드에서 UnityLinker 가 한 번 세그폴트로 실패했고, 같은 설정의 이전 빌드는 성공했다. 일시 오류로 보고 재실행했다.
+- QA 서명 키스토어를 만들어 Secrets(ANDROID_QA_*)에 넣었다. Release 와 분리해서 QA 키가 Release 서명에 쓰이지 않게 했다. 원본과 비밀번호는 Mac 의 ~/.config/ashveil/qa-signing/ (권한 600). 이 키로 처음 설치할 때는 기존 앱을 한 번 지워야 한다.
