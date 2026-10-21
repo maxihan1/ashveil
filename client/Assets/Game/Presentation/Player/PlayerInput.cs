@@ -9,7 +9,7 @@ namespace Ashveil.Presentation
     public sealed class CameraRig : MonoBehaviour
     {
         public Transform Target;
-        public Vector3 Offset = new Vector3(0, 13f, -10.5f);
+        public Vector3 Offset = new Vector3(0, 19f, -15f);
         public float Smooth = 10f;
 
         public static CameraRig Create(Transform target)
@@ -20,7 +20,7 @@ namespace Ashveil.Presentation
                 var go = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener)) { tag = "MainCamera" };
                 camera = go.GetComponent<Camera>();
             }
-            camera.farClipPlane = 140f;
+            camera.farClipPlane = 180f;
             camera.nearClipPlane = 0.3f;
             camera.fieldOfView = 45f;
             // GetComponent 결과에 ?? 를 쓰면 에디터의 가짜 null 을 통과시키므로 == null 로 확인한다.

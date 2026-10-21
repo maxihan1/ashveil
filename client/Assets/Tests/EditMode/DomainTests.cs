@@ -178,9 +178,7 @@ namespace Ashveil.Tests
             var input = new AutoHuntInput { HpRatio = 0.4f, PotionCount = 3, PotionReady = true };
             Assert.AreEqual(AutoHuntAction.UsePotion, AutoHuntPolicy.Decide(input));
             input.PotionCount = 0;
-            Assert.AreEqual(AutoHuntAction.FindTarget, AutoHuntPolicy.Decide(input));
-            input.InSafeZone = true;
-            Assert.AreEqual(AutoHuntAction.None, AutoHuntPolicy.Decide(input));
+            Assert.AreEqual(AutoHuntAction.FindTarget, AutoHuntPolicy.Decide(input), "마을 안에서도 사냥터 몬스터를 찾아 나간다");
         }
 
         [Test]

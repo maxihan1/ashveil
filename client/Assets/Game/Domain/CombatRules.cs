@@ -45,8 +45,8 @@ namespace Ashveil.Domain
 
     public static class CombatRules
     {
-        public const float PlayerMoveSpeed = 6f;
-        public const float BotMoveSpeed = 4.5f;
+        public const float PlayerMoveSpeed = 8.5f;
+        public const float BotMoveSpeed = 6.5f;
         public const float PotionCooldown = 1.5f;
         public const float RegenPerSecondPercent = 0.01f;
 

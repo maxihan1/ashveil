@@ -8,13 +8,19 @@ namespace Ashveil.Presentation
     public sealed class AutoHuntController : MonoBehaviour
     {
         private const float TickSeconds = 0.3f;
-        private const float WideSearchRadius = 60f;
+        // 마을 중앙에서 초보 사냥터 몬스터까지 닿는 거리
+        private const float WideSearchRadius = 150f;
         private float _timer;
+        private bool _warnedNoTarget;
 
         private void Update()
         {
             var player = WorldServices.Player;
-            if (player == null || !player.AutoHunt || player.Actor.IsDead) return;
+            if (player == null || !player.AutoHunt || player.Actor.IsDead)
+            {
+                _warnedNoTarget = false;
+                return;
+            }
             _timer -= Time.deltaTime;
             if (_timer > 0) return;
             _timer = TickSeconds;
@@ -25,8 +31,8 @@ namespace Ashveil.Presentation
                 HpRatio = (float)state.Hp / state.MaxHp,
                 PotionCount = state.CountOf(Ashveil.Shared.ItemCatalog.PotionHpSmall) + state.CountOf(Ashveil.Shared.ItemCatalog.PotionHpLarge),
                 PotionReady = player.PotionCooldown <= 0,
-                HasLiveTarget = player.Target != null && !player.Target.IsDead && player.Target.isActiveAndEnabled,
-                InSafeZone = player.Actor.InSafeZone,
+                // 경비병처럼 공격할 수 없는 대상이 선택돼 있으면 계속 붙잡혀 있지 않고 새로 찾는다.
+                HasLiveTarget = player.Target != null && player.Target.isActiveAndEnabled && player.CanAttack(player.Target, out _),
             });
 
             switch (action)
@@ -38,6 +44,8 @@ namespace Ashveil.Presentation
                     var target = Actor.Nearest(player.Actor.Flat, AutoHuntPolicy.SearchRadius, IsHuntable)
                                  ?? Actor.Nearest(player.Actor.Flat, WideSearchRadius, IsHuntable);
                     if (target != null) player.SetTarget(target);
+                    else if (!_warnedNoTarget) Toast.Show("주변에 사냥할 몬스터가 없습니다.");
+                    _warnedNoTarget = target == null;
                     break;
             }
         }

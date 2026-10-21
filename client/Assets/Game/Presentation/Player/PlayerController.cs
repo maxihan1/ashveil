@@ -225,6 +225,10 @@ namespace Ashveil.Presentation
                         return false;
                     }
                     return true;
+                case Team.Guard:
+                case Team.Npc:
+                    reason = "경비병과 마을 NPC는 공격할 수 없습니다.";
+                    return false;
                 default:
                     return false;
             }

@@ -9,7 +9,6 @@ namespace Ashveil.Domain
         public int PotionCount;
         public bool PotionReady;
         public bool HasLiveTarget;
-        public bool InSafeZone;
     }
 
     public static class AutoHuntPolicy
@@ -22,7 +21,6 @@ namespace Ashveil.Domain
         public static AutoHuntAction Decide(AutoHuntInput input)
         {
             if (input.HpRatio <= PotionThreshold && input.PotionCount > 0 && input.PotionReady) return AutoHuntAction.UsePotion;
-            if (input.InSafeZone) return AutoHuntAction.None;
             return input.HasLiveTarget ? AutoHuntAction.KeepTarget : AutoHuntAction.FindTarget;
         }
     }
