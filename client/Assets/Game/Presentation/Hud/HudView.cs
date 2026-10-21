@@ -1,4 +1,4 @@
-// 전투 HUD: 상태 막대·골드·구역·대상 정보, 공격·스킬·물약·자동사냥·PK·귀환 버튼, 각종 창 열기
+// 전투 HUD: 상태 막대·골드·구역·대상 정보, 하단 퀵슬롯(스킬·물약·귀환), 공격·자동사냥·PK 버튼, 각종 창 열기
 using System.Linq;
 using Ashveil.Application;
 using Ashveil.Domain;
@@ -118,18 +118,27 @@ namespace Ashveil.Presentation
             // 좌하단 조이스틱
             _joystick = VirtualJoystick.Create(root);
 
-            // 우하단: 공격 버튼을 중심으로 스킬·물약을 원호로, 그 위 오른쪽 끝에 자동·PK·귀환 토글
+            // 하단 가운데: 퀵슬롯 한 줄(스킬·물약·귀환)
+            var slots = Ui.Place(Ui.Node(root, "QuickSlots"), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(540, 128));
+            var slotLayout = slots.gameObject.AddComponent<HorizontalLayoutGroup>();
+            slotLayout.spacing = 12;
+            slotLayout.childAlignment = TextAnchor.MiddleCenter;
+            slotLayout.childForceExpandWidth = false;
+            slotLayout.childControlWidth = false;
+            slotLayout.childControlHeight = false;
+            var skill1 = QuickSlot(slots, "Skill1Button", Controller.Profile.Skill1.Name, () => Controller.UseSkill(0), UiColors.Button);
+            var skill2 = QuickSlot(slots, "Skill2Button", Controller.Profile.Skill2.Name, () => Controller.UseSkill(1), UiColors.Button);
+            _skillCooldownTexts = new[] { CooldownLabel(skill1), CooldownLabel(skill2) };
+            var potion = QuickSlot(slots, "PotionButton", "물약", () => Controller.UsePotion(), new Color(0.55f, 0.15f, 0.2f));
+            _potionCount = Ui.Label(potion.transform, "CountText", "0", 22, TextAnchor.LowerRight, UiColors.Text);
+            Ui.Stretch(_potionCount.rectTransform, 0, 8, 10, 0);
+            QuickSlot(slots, "TownButton", "귀환", () => Controller.ReturnToTown(), new Color(0.2f, 0.45f, 0.35f));
+
+            // 우하단: 공격 버튼, 그 왼쪽 위 원호에 자동·PK
             var attack = new Vector2(-170, 170);
             ArcButton(root, "AttackButton", "공격", attack, 0, 0, 230, OnAttack, UiColors.ButtonDanger);
-            var skill1 = ArcButton(root, "Skill1Button", Controller.Profile.Skill1.Name, attack, 180, 235, 140, () => Controller.UseSkill(0), UiColors.Button);
-            var skill2 = ArcButton(root, "Skill2Button", Controller.Profile.Skill2.Name, attack, 135, 235, 140, () => Controller.UseSkill(1), UiColors.Button);
-            _skillCooldownTexts = new[] { CooldownLabel(skill1), CooldownLabel(skill2) };
-            var potion = ArcButton(root, "PotionButton", "물약", attack, 90, 230, 120, () => Controller.UsePotion(), new Color(0.55f, 0.15f, 0.2f));
-            _potionCount = Ui.Label(potion.transform, "CountText", "0", 22, TextAnchor.LowerCenter, UiColors.Text);
-            Ui.Stretch(_potionCount.rectTransform, 0, 10, 0, 0);
-            _autoHunt = ToggleButton(root, "AutoHuntButton", "자동", 500, ToggleAutoHunt, UiColors.Button);
-            _pkMode = ToggleButton(root, "PkModeButton", "PK", 576, TogglePk, UiColors.Button);
-            ToggleButton(root, "TownButton", "귀환", 652, () => Controller.ReturnToTown(), new Color(0.2f, 0.45f, 0.35f));
+            _autoHunt = ArcButton(root, "AutoHuntButton", "자동", attack, 165, 215, 120, ToggleAutoHunt, UiColors.Button);
+            _pkMode = ArcButton(root, "PkModeButton", "PK", attack, 110, 215, 110, TogglePk, UiColors.Button);
 
             _panelLayer = Ui.Stretch(Ui.Node(root, "PanelLayer"));
         }
@@ -145,11 +154,10 @@ namespace Ashveil.Presentation
             return button;
         }
 
-        /// <summary>오른쪽 끝 세로 줄의 토글 버튼. y 는 화면 아래에서 버튼 가운데까지 거리.</summary>
-        private static Button ToggleButton(Transform parent, string name, string label, float y, System.Action onClick, Color color)
+        private static Button QuickSlot(Transform parent, string name, string label, System.Action onClick, Color color)
         {
-            var button = Ui.Button(parent, name, label, onClick, color, 26);
-            Ui.Place(Ui.Rect(button), new Vector2(1, 0), new Vector2(1, 0.5f), new Vector2(-20, y), new Vector2(150, 66));
+            var button = Ui.Button(parent, name, label, onClick, color, 24);
+            Ui.Rect(button).sizeDelta = new Vector2(120, 120);
             return button;
         }
 
