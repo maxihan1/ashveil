@@ -97,6 +97,7 @@ PkHistoryDto = { kills, deaths, alignment: AlignmentDto,
 
 | 메서드 | 경로 | 요청 | 응답 |
 |---|---|---|---|
+| GET | `/world/spawns` | - | `SpawnPointDto[]` 몬스터 스폰 표. 클라이언트가 월드 입장 때 받는다 |
 | GET | `/world/ground-items?zone=Beginner` | - | `GroundItemDto[]` 만료되지 않은 것만 |
 | POST | `/world/ground-items/{id}/pickup` | `{ botId?, x, z }` botId가 있으면 봇이 줍는다 | `{ item: ItemDto, pickedByKind, pickedById, inventory: InventoryDto? }` |
 | GET | `/bots?zone=Beginner` | - | `BotDto[]` (zone 생략 시 전체) |
@@ -107,9 +108,10 @@ GroundItemDto  = { id, templateId, quantity, enhanceLevel, zone, x, z, expiresAt
 BotDto         = { id, name, classType, gender, level, zone, temperament, alignment: AlignmentDto,
                    isDead, respawnAt, equipment: ItemDto[], itemCount }
 LedgerEntryDto = { id, reason, delta, balanceAfter, relatedType, relatedId, createdAt }
+SpawnPointDto  = { id, zone, monster, x, z }
 ```
 
-원장 사유(`reason`)는 `CHARACTER_CREATED`, `MONSTER_KILL`, `SHOP_BUY`, `SHOP_SELL`, `ENHANCE`, `GM_GRANT` 이다.
+원장 사유(`reason`)는 `CHARACTER_CREATED`, `MONSTER_KILL`, `SHOP_BUY`, `SHOP_SELL`, `ENHANCE`, `GM_GRANT`, `ADMIN_ADJUST`, `ADMIN_RESET` 이다.
 
 ## GM (QA 전용, `ASPNETCORE_ENVIRONMENT=Qa` 일 때만 등록, `X-Character-Id`)
 
@@ -125,3 +127,42 @@ LedgerEntryDto = { id, reason, delta, balanceAfter, relatedType, relatedId, crea
 | GET | `/gm/config` | - | 현재 강화·드랍 설정 전체 |
 
 순간이동은 클라이언트 GM 콘솔이 위치를 옮긴 뒤 `PUT /characters/{id}/position` 으로 저장한다.
+
+## 어드민 (QA 전용, `X-Admin-Key`)
+
+`ASPNETCORE_ENVIRONMENT=Qa` 이고 `Admin:Key`(환경 변수 `Admin__Key`, 16자 이상)를 설정했을 때만 열린다. 그 밖에는 모든 `/admin/*` 가 `404 ADMIN_DISABLED`, 키가 틀리면 `401 UNAUTHORIZED`. 플레이어 토큰은 필요 없다. 브라우저 화면은 `GET /backoffice` (D-36).
+
+| 메서드 | 경로 | 요청 | 응답 |
+|---|---|---|---|
+| GET | `/admin/accounts?prefix=&limit=` | - | `[{ id, username, createdAt, characterCount }]` |
+| GET | `/admin/characters?name=&accountId=&includeDeleted=&limit=` | - | `AdminCharacterDto[]` |
+| GET | `/admin/characters/{id}` | - | `CharacterDto` |
+| GET | `/admin/characters/{id}/summary` | - | `AdminCharacterDto` |
+| GET | `/admin/characters/{id}/inventory` | - | `InventoryDto` |
+| GET | `/admin/characters/{id}/ledger?limit=` | - | `LedgerEntryDto[]` 최신순 |
+| GET | `/admin/characters/{id}/enhance-history?limit=` | - | `[{ id, itemId, templateId, fromLevel, toLevel, result, goldCost, createdAt }]` |
+| GET | `/admin/pk-records?characterId=&limit=` | - | `PkRecordDto[]` |
+| GET | `/admin/item-templates` | - | `[{ id, name, type }]` |
+| PATCH | `/admin/characters/{id}` | `{ gold?, level?, exp?, alignment?, clearPurple?, x?, z? }` 준 항목만 바꾼다 | `CharacterDto` |
+| POST | `/admin/characters/{id}/items` | `{ templateId, quantity, enhanceLevel }` | `InventoryDto` |
+| DELETE | `/admin/characters/{id}/items/{itemId}` | - | `InventoryDto` |
+| POST | `/admin/characters/{id}/reset` | - | `CharacterDto` 레벨 1·시작 골드·시작 장비·성향 0·마을 |
+| GET / POST / DELETE | `/admin/forced` | POST `{ enhance?: ["Success"\|"Fail"\|"Destroy"], botLoot?: [bool], deathDrop?: [bool] }` | `{ enhance, botLoot, deathDrop }` 대기 중인 고정 결과 |
+| GET | `/admin/config` | - | `{ enhance, drop, forced }` |
+| PUT | `/admin/config/enhance-rates` | GM `enhance-rate` 와 같음 | 강화 설정 |
+| PUT | `/admin/config/drop-rates` | GM `drop-rate` 와 같음 | 드랍 설정 |
+| POST | `/admin/cleanup` | `{ usernamePrefix }` 3자 이상 | `{ accountsDeleted, charactersDeleted }` |
+| POST | `/admin/world/reset` | `{ zone? }` | `{ groundItemsDeleted, botCount }` |
+| GET | `/admin/spawns` | - | `SpawnPointDto[]` |
+| PUT | `/admin/spawns/{id}` | `{ zone, monster, x, z }` 없으면 만들고 있으면 고친다. 마을 불가 | `SpawnPointDto` |
+| DELETE | `/admin/spawns/{id}` | - | `{ count }` 남은 스폰 수 |
+| POST | `/admin/spawns/reset` | - | `{ count }` 기본 표(49곳)로 복원 |
+
+```
+AdminCharacterDto = { id, accountId, username, name, classType, level, exp, gold, x, z, zone,
+                      alignment, purpleUntil, pkKills, pkDeaths, createdAt, deleted }
+```
+
+- 골드 변경은 차액만큼 원장에 `ADMIN_ADJUST`, 초기화는 `ADMIN_RESET` 으로 남는다. 원장 합계 = 현재 골드가 유지된다.
+- 결과 고정은 다음 판정부터 차례로 쓰인다. 안전 구간(+3까지) 강화는 항상 성공이라 큐를 쓰지 않는다. 큐는 서버 전체 공용이라 테스트를 병렬로 돌리면 서로 가져갈 수 있다.
+- 확률·결과 고정은 서버 메모리에만 있어 서버를 다시 켜면 사라진다. 스폰 표는 DB 에 남는다.

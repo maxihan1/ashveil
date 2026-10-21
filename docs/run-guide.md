@@ -20,6 +20,12 @@ curl http://localhost:8080/health   # {"status":"ok","environment":"Qa"}
 - 처음 실행하면 봇 20명(초급 8, 중급 10, 보스 지역 2)이 자동으로 만들어진다.
 - 데이터를 지우고 처음부터 시작하려면 `docker compose down -v`.
 
+### 백오피스 (어드민 웹)
+
+- 브라우저에서 http://localhost:8080/backoffice 를 열고 `infra/.env` 의 `ADMIN_KEY` 값(기본 `local-qa-admin-key-change-me`)을 넣는다.
+- 캐릭터 검색·골드/레벨/성향 변경·아이템 지급·초기화, 강화·드랍 확률, 결과 고정, 몬스터 스폰 편집, 테스트 계정 정리를 할 수 있다.
+- 같은 기능을 API 로 쓰려면 `X-Admin-Key` 헤더를 붙여 `/admin/*` 를 부른다(`docs/api.md` 어드민 절).
+
 ## 2. APK 받기
 
 1. GitHub 저장소 → Actions → `unity-ci` → 가장 최근 main 실행(또는 Run workflow 로 수동 실행).

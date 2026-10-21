@@ -29,6 +29,7 @@ services:
       ASPNETCORE_ENVIRONMENT: ${SERVER_ENVIRONMENT:-Qa}
       ConnectionStrings__Game: "Host=db;Port=5432;Database=ashveil;Username=ashveil;Password=${DB_PASSWORD:-ashveil}"
       Jwt__Key: ${JWT_KEY:-local-qa-signing-key-change-me-0123456789}
+      Admin__Key: ${ADMIN_KEY:-local-qa-admin-key-change-me}
     ports:
       # 0.0.0.0 으로 열어 같은 Wi-Fi 의 폰(Device Farm)에서 접속할 수 있게 한다.
       - "${SERVER_PORT:-8080}:8080"

@@ -52,6 +52,8 @@ public static class AdminEndpoints
 
     private static void MapQueries(RouteGroupBuilder admin)
     {
+        admin.MapGet("/item-templates", () => ItemCatalog.All.Select(t => new { t.Id, t.Name, Type = t.Type.ToString() }).ToList());
+
         admin.MapGet("/accounts", async (string? prefix, int? limit, GameDbContext db) =>
         {
             var query = db.Accounts.AsNoTracking();

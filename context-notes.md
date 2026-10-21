@@ -27,3 +27,8 @@
 - QA APK 에는 AltTester SDK(GPL-3.0)가 들어간다. AltTester 문서는 SDK 가 든 앱을 배포하면 그 앱에도 GPL-3.0 을 적용해야 한다고 한다. 공개 아티팩트도 배포에 해당하므로 처리 방법을 사용자에게 물었다(답변 대기).
 - Unity Personal 의 `.ulf` 경로가 막혀서 계정 로그인 방식으로 바꿨다(D-34). GameCI cli 의 personal 방식은 2026-09 에 나온 새 기능이라, 첫 실행 로그에서 활성화 단계(Licensing method: personal)를 먼저 확인한다.
 - 사용자가 GPL-3.0 LICENSE 추가를 골랐다(D-35). 첫 GameCI 테스트 실행에서 Personal 활성화, PlayMode 4개, EditMode 27개가 통과했다. 테스트 액션의 coverageEnabled: false 입력은 game-ci CLI 가 거부해서 GAME_CI_COVERAGE_ENABLED 환경 변수로 바꿨다.
+- 폰 첫 플레이 피드백 반영. 자동사냥이 마을에서 아무것도 하지 않던 것과 경비병 대상에 묶이던 것이 원인이었다. 이동 6→8.5, 카메라 높이 13→19.
+- HUD 는 모바일 MMORPG 관례대로 스킬·물약·귀환을 하단 가운데 퀵슬롯으로 옮겼다. 창(가방·정보)은 모달이라 퀵슬롯 위를 덮는 것이 정상이다.
+- 사용자 요청으로 어드민 API·백오피스·서버 스폰 표를 만들었다(D-36~D-38). GM API 는 본인 캐릭터 전용이라 그대로 둔다.
+- CI 디버그 서명 키가 빌드마다 달라 새 QA APK 를 설치하려면 기존 앱을 지워야 한다(INSTALL_FAILED_UPDATE_INCOMPATIBLE). 고정하려면 QA 용 키스토어를 Secrets 에 넣는다.
+- Release 빌드에서 UnityLinker 가 한 번 세그폴트로 실패했고, 같은 설정의 이전 빌드는 성공했다. 일시 오류로 보고 재실행했다.
