@@ -112,6 +112,8 @@ namespace Ashveil.Editor
             Debug.Log($"[Build] 결과 {summary.result}, 크기 {summary.totalSize / (1024 * 1024)}MB, 오류 {summary.totalErrors}, 경고 {summary.totalWarnings}, {summary.totalTime}");
             if (summary.result != BuildResult.Succeeded)
                 throw new Exception($"Android {args.Variant} 빌드 실패: {summary.result} (오류 {summary.totalErrors}개)");
+            // game-ci CLI 는 로그에서 이 문구(또는 기본 빌드 스크립트의 결과 표)를 찾아 성공을 판정한다.
+            Console.WriteLine("Build succeeded!");
         }
 
         private static void ConfigureSigning(BuildArgs args)
