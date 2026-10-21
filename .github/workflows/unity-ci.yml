@@ -108,6 +108,8 @@ jobs:
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # coverageEnabled: false 입력은 game-ci CLI v0.1.72 가 모르는 --no-coverageEnabled 로 넘어가 실패하므로 환경 변수로 끈다.
+          GAME_CI_COVERAGE_ENABLED: "false"
         with:
           projectPath: client
           unityVersion: ${{ env.UNITY_VERSION }}
@@ -115,7 +117,6 @@ jobs:
           artifactsPath: test-results
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: Unity 테스트 결과
-          coverageEnabled: false
 
       - uses: actions/upload-artifact@v7
         if: always()
