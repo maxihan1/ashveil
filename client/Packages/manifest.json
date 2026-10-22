@@ -19,6 +19,7 @@
     "com.unity.modules.terrainphysics": "1.0.0",
     "com.unity.modules.ui": "1.0.0",
     "com.unity.modules.uielements": "1.0.0",
-    "com.unity.modules.unitywebrequest": "1.0.0"
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.maxihan1.control-cli": "https://github.com/maxihan1/control_cli.git?path=/sdk#step0"
   }
 }

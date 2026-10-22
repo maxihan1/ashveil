@@ -136,7 +136,7 @@ jobs:
       fail-fast: false
       max-parallel: 1 # Personal 좌석 하나로 차례로 빌드
       matrix:
-        variant: [qa, release]
+        variant: [qa] # 0단계 시험: control_cli SDK 를 넣은 QA 만
     steps:
       - name: 러너 디스크 확보 (Unity Android 이미지 7GB+)
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -158,9 +158,6 @@ jobs:
           BOSSROOM_CACHE: ${{ github.workspace }}/.cache/bossroom
         run: bash tools/fetch-bossroom.sh
 
-      - name: QA 빌드 전용 AltTester SDK 추가
-        if: matrix.variant == 'qa'
-        run: python3 tools/ci/enable-alttester.py client/Packages/manifest.json 2.3.2
 
       - uses: actions/cache@v6
         with:

@@ -5,7 +5,8 @@
         "Ashveil.Shared",
         "Ashveil.Domain",
         "Ashveil.Application",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "ControlCli.Input"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
