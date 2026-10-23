@@ -87,7 +87,7 @@ namespace Ashveil.Editor
             var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             // SDK 가 없으면 정의 심볼만 있고 조작 포트가 없는 QA 빌드가 조용히 나온다.
             if (args.IsQa && !File.ReadAllText("Packages/manifest.json").Contains(ControlCliPackage))
-                throw new InvalidOperationException("QA 빌드에는 control_cli SDK 가 필요합니다. 빌드 전에 npx -y github:maxihan1/control_cli instrument client 를 돌리세요(docs/ci.md).");
+                throw new InvalidOperationException("QA 빌드에는 control_cli SDK 가 필요합니다. 빌드 전에 control-cli instrument client 를 돌리세요(docs/ci.md).");
 
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args.OutputPath)) ?? ".");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions

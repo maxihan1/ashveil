@@ -160,9 +160,14 @@ jobs:
         run: bash tools/fetch-bossroom.sh
 
       # 게임 조작 SDK 는 저장소에 넣지 않고 QA 빌드에서만 더한다(D-39). 커밋을 고정해 빌드가 재현된다.
+      # npx 로 git 패키지를 받으면 npm 이 「GitFetcher requires an Arborist constructor」로 멈춰서 받아서 빌드한다.
       - name: QA 빌드 전용 control_cli SDK 추가
         if: matrix.variant == 'qa'
-        run: npx -y "github:maxihan1/control_cli#${CONTROL_CLI_REF}" instrument client --ref "$CONTROL_CLI_REF"
+        run: |
+          git clone -q https://github.com/maxihan1/control_cli.git "$RUNNER_TEMP/control_cli"
+          git -C "$RUNNER_TEMP/control_cli" checkout -q "$CONTROL_CLI_REF"
+          npm --prefix "$RUNNER_TEMP/control_cli" ci --no-audit --no-fund
+          node "$RUNNER_TEMP/control_cli/dist/main.js" instrument client --ref "$CONTROL_CLI_REF"
 
       - uses: actions/cache@v6
         with:
