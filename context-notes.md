@@ -34,3 +34,4 @@
 - Release 빌드에서 UnityLinker 가 한 번 세그폴트로 실패했고, 같은 설정의 이전 빌드는 성공했다. 일시 오류로 보고 재실행했다.
 - QA 서명 키스토어를 만들어 Secrets(ANDROID_QA_*)에 넣었다. Release 와 분리해서 QA 키가 Release 서명에 쓰이지 않게 했다. 원본과 비밀번호는 Mac 의 ~/.config/ashveil/qa-signing/ (권한 600). 이 키로 처음 설치할 때는 기존 앱을 한 번 지워야 한다.
 - QA 서명 검증(빌드 39547973661): QA APK 인증서 SHA-256 이 QA 키스토어와 같다(9ED3…DDAA). Release 는 디버그 서명. 공개 빌드 로그에 비밀번호·키스토어 평문이 없는 것도 확인했다.
+- 2026-10-23 QA 빌드 계측을 AltTester 에서 control_cli SDK 로 바꿨다(D-39). AltTester 와 control_cli 는 둘 다 `Input` 을 바꿔치기해 같이 넣을 수 없다. SDK 는 QA 잡의 `control-cli instrument` 가 커밋을 고정해 더한다(`unity-ci.yml` 의 `CONTROL_CLI_REF`).

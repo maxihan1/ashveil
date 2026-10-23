@@ -36,7 +36,7 @@ COMMON_DEFINES = [
 CONFIGS = {
     "player-release": {"defines": ["ENABLE_IL2CPP"], "editor": False},
     "player-qa": {"defines": ["ENABLE_IL2CPP", "QA_BUILD", "DEVELOPMENT_BUILD"], "editor": False},
-    "editor-qa": {"defines": ["UNITY_EDITOR", "UNITY_EDITOR_64", "QA_BUILD", "UNITY_INCLUDE_TESTS", "ALTTESTER_SDK_PRESENT"],
+    "editor-qa": {"defines": ["UNITY_EDITOR", "UNITY_EDITOR_64", "QA_BUILD", "UNITY_INCLUDE_TESTS"],
                   "editor": True},
 }
 
@@ -53,9 +53,6 @@ ASSEMBLIES = [
      ["Ashveil.Shared", "Ashveil.Domain", "Ashveil.Application", "UnityEngine.UI"], {"newtonsoft": True}),
     ("Ashveil.Editor", ["client/Assets/Game/Editor"], "editor",
      ["Ashveil.Shared", "Ashveil.Domain", "Ashveil.Application", "Ashveil.Presentation", "UnityEngine.UI"],
-     {"editor_only": True, "exclude": ["client/Assets/Game/Editor/AltTester"]}),
-    ("AltTesterStubs", ["tools/unity-compile-check/stubs"], "editor", [], {"editor_only": True, "third_party": True}),
-    ("Ashveil.Editor.AltTester", ["client/Assets/Game/Editor/AltTester"], "editor", ["Ashveil.Editor", "AltTesterStubs"],
      {"editor_only": True}),
     ("Ashveil.Tests.EditMode", ["client/Assets/Tests/EditMode"], "editor",
      ["Ashveil.Shared", "Ashveil.Domain", "Ashveil.Application", "UnityEngine.TestRunner"],

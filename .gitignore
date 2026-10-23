@@ -27,8 +27,6 @@ client/Assets/ThirdParty/BossRoom/
 client/Assets/ThirdParty/BossRoom.meta
 client/Assets/Game/Generated/
 client/Assets/Game/Generated.meta
-client/Assets/AltTester/
-client/Assets/AltTester.meta
 
 # 인프라
 infra/.env
@@ -36,4 +34,3 @@ infra/.env
 # 로컬 도구 산출물
 tools/unity-compile-check/.cache/
 tools/unity-compile-check/.work/
-qa-tests/target/

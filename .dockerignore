@@ -3,7 +3,6 @@
 **/TestResults/
 client/
 docs/
-qa-tests/
 .git/
 .github/
 .claude/

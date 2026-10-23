@@ -37,18 +37,16 @@ Unity 는 CI 안에서도 활성화된 라이선스가 있어야 실행된다. �
 | Secret | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEYALIAS_NAME`, `ANDROID_KEYALIAS_PASS` | Release 서명 키. 없으면 디버그 서명으로 빌드한다 |
 | Secret | `ANDROID_QA_KEYSTORE_BASE64`, `ANDROID_QA_KEYSTORE_PASS`, `ANDROID_QA_KEYALIAS_NAME`, `ANDROID_QA_KEYALIAS_PASS` | QA 서명 키(등록됨, 2026-10-21). 빌드마다 같은 키라 기존 앱을 지우지 않고 덮어 설치된다. 원본은 만든 Mac 의 `~/.config/ashveil/qa-signing/` 에 있다 |
 | Variable | `GAME_SERVER_URL` | APK 에 넣을 기본 서버 주소 (예: `http://192.168.0.10:8080`). 앱에서 바꿀 수도 있다 |
-| Variable | `ALTTESTER_HOST`, `ALTTESTER_PORT`, `ALTTESTER_APP_NAME` | QA 빌드의 AltTester 서버 주소·포트·앱 이름 (기본 `127.0.0.1`, `13000`, `ashveil`) |
 
 ## 2. build 잡 흐름
 
 ```
 free-disk-space → checkout
 → tools/fetch-bossroom.sh       Boss Room 고정 커밋 1299ba4f 에서 아트 폴더만 sparse + LFS 로 받기 (캐시)
-→ (QA만) tools/ci/enable-alttester.py   manifest 에 com.alttester.sdk 2.3.2 (OpenUPM) 추가
+→ (QA만) control-cli instrument client   manifest 에 control_cli SDK(CONTROL_CLI_REF 커밋) + asmdef 에 ControlCli.Input 참조
 → game-ci/unity-builder@v6       -executeMethod Ashveil.Editor.CiBuild.BuildAndroid
      ├ ContentGenerator.GenerateAll()   URP 에셋, 프리팹, Boot·World 씬 생성
-     ├ 변형별 설정                       번들 ID, 앱 이름, 정의 심볼(QA_BUILD), HTTP 허용, 서버 주소
-     ├ (QA만) AltTester 계측             ALTTESTER 정의 + 첫 씬에 AltTester 프리팹(호스트·포트·앱 이름)
+     ├ 변형별 설정                       번들 ID, 앱 이름, 정의 심볼(QA_BUILD · CONTROL_CLI), HTTP 허용, 서버 주소
      └ BuildPipeline.BuildPlayer         IL2CPP ARM64 APK (QA 는 Development 빌드)
 → 아티팩트 Ashveil-qa-apk, Ashveil-release-apk
 ```
@@ -56,8 +54,8 @@ free-disk-space → checkout
 | | QA 빌드 | Release 빌드 |
 |---|---|---|
 | 번들 ID | `com.nimbusgames.ashveil.qa` | `com.nimbusgames.ashveil` |
-| 정의 심볼 | `QA_BUILD`, `ALTTESTER` | 없음 |
-| AltTester SDK | 포함 (CI가 패키지 추가) | 패키지 자체가 없음 |
+| 정의 심볼 | `QA_BUILD`, `CONTROL_CLI` | 없음 |
+| control_cli SDK | 포함 (CI가 패키지 추가, D-39) | 패키지 자체가 없음 |
 | GM 콘솔 | 있음 | 코드가 컴파일되지 않음 |
 | HTTP 평문 | 허용 (`usesCleartextTraffic=true`) | 차단 (HTTPS 서버 필요) |
 | 빌드 옵션 | Development | 일반 |
@@ -69,7 +67,6 @@ free-disk-space → checkout
 | `-buildVariant` | `qa` | `qa` 또는 `release` |
 | `-buildNumber` | `1` | versionCode, 버전 `0.1.<n>` |
 | `-serverUrl` | 없음 | `Resources/server-config.json` 에 들어갈 기본 서버 주소 |
-| `-altHost` / `-altPort` / `-altAppName` | `127.0.0.1` / `13000` / `ashveil` | AltTester 서버 접속 정보 |
 | `-customBuildPath` | GameCI가 넘김 | 출력 APK 경로 |
 
 ## 4. 로컬에서 할 수 있는 검증 (Unity 설치 없이)
