@@ -7,7 +7,7 @@
 | `server-ci` | PR, main 푸시 (server·shared 변경) | shared 단위 테스트 + 실제 PostgreSQL 통합 테스트, 서버 Docker 이미지 빌드 | 아니오 |
 | `unity-ci` / compile-check | PR, main 푸시 (client·shared·tools 변경) | Unity 6000.0.84f1 관리 DLL로 클라이언트 C# 컴파일 검사(Release·QA·Editor 3가지 정의 조합), EditMode 테스트 실행 | 아니오 |
 | `unity-ci` / test | 위와 같음 | GameCI `unity-test-runner@v4` 로 EditMode + PlayMode 테스트 | 예 |
-| `unity-ci` / build | main 푸시, 수동 실행 | Boss Room 아트 가져오기 → 씬·프리팹 생성 → QA APK, Release APK 빌드 → 아티팩트 업로드 | 예 |
+| `unity-ci` / build | main 푸시, 수동 실행 | Boss Room 아트 가져오기 → 씬·프리팹 생성 → QA APK, Release APK 빌드 → 아티팩트 업로드 → QA APK 를 QA Hub 에 올리기 | 예 |
 
 Unity 라이선스 Secret이 없으면 test·build 잡은 건너뛰고 경고만 남긴다(D-25). compile-check 와 server-ci 는 항상 돈다.
 
@@ -37,6 +37,11 @@ Unity 는 CI 안에서도 활성화된 라이선스가 있어야 실행된다. �
 | Secret | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEYALIAS_NAME`, `ANDROID_KEYALIAS_PASS` | Release 서명 키. 없으면 디버그 서명으로 빌드한다 |
 | Secret | `ANDROID_QA_KEYSTORE_BASE64`, `ANDROID_QA_KEYSTORE_PASS`, `ANDROID_QA_KEYALIAS_NAME`, `ANDROID_QA_KEYALIAS_PASS` | QA 서명 키(등록됨, 2026-10-21). 빌드마다 같은 키라 기존 앱을 지우지 않고 덮어 설치된다. 원본은 만든 Mac 의 `~/.config/ashveil/qa-signing/` 에 있다 |
 | Variable | `GAME_SERVER_URL` | APK 에 넣을 기본 서버 주소 (예: `http://192.168.0.10:8080`). 앱에서 바꿀 수도 있다 |
+| Secret | `QAHUB_TOKEN` | QA Hub(README 의 Test Hub) CI 토큰 `cit_…`. QA Hub 설정 › 애플리케이션 › Ashveil 「CI 토큰」에서 만든다. 이 애플리케이션의 빌드 올리기만 연다 |
+| Secret | `QAHUB_URL` | QA Hub 주소 (예: `https://qahub.example.com`). GitHub 러너에서 열려야 한다(집 안 주소 `192.168…` 는 안 닿는다). 공개 저장소라 로그에 주소가 안 남게 Secret 으로 두고, 연결 오류도 curl 종료 코드만 찍는다 |
+| Variable | `QAHUB_ENV` | QA APK 를 받을 QA Hub 대상 서버 이름. 실서비스 서버는 안 된다(400 `PROD_ENV_BLOCKED`) |
+
+`QAHUB_*` 셋이 다 있으면 QA 빌드 잡 끝에 QA APK 를 QA Hub 에 올리고, QA Hub 가 스모크 → 회귀를 돌린다(D-40). 하나라도 없으면 경고만 남기고 건너뛴다.
 
 ## 2. build 잡 흐름
 
@@ -49,6 +54,7 @@ free-disk-space → checkout
      ├ 변형별 설정                       번들 ID, 앱 이름, 정의 심볼(QA_BUILD · CONTROL_CLI), HTTP 허용, 서버 주소
      └ BuildPipeline.BuildPlayer         IL2CPP ARM64 APK (QA 는 Development 빌드)
 → 아티팩트 Ashveil-qa-apk, Ashveil-release-apk
+→ (QA만) QA Hub 에 올리기         POST <QAHUB_URL>/api/builds?env=<QAHUB_ENV>&buildNo=<run_number> (같은 번호 409 는 다시 실행이라 통과)
 ```
 
 | | QA 빌드 | Release 빌드 |
@@ -65,7 +71,7 @@ free-disk-space → checkout
 | 인자 | 기본값 | 설명 |
 |---|---|---|
 | `-buildVariant` | `qa` | `qa` 또는 `release` |
-| `-buildNumber` | `1` | versionCode, 버전 `0.1.<n>` |
+| `-buildNumber` | `1` | versionCode, 버전 `0.1.<n>`. CI 는 `github.run_number` 를 넘기고 QA Hub 에 같은 번호를 보낸다 — 폰에 다른 빌드가 깔려 있으면 QA Hub 실행 결과가 알린다 |
 | `-serverUrl` | 없음 | `Resources/server-config.json` 에 들어갈 기본 서버 주소 |
 | `-customBuildPath` | GameCI가 넘김 | 출력 APK 경로 |
 
