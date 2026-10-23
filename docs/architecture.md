@@ -6,7 +6,7 @@
 
 ```
 [Android 폰: Unity 클라이언트] --REST/JSON--> [ASP.NET Core 서버] --EF Core--> [PostgreSQL]
-        │  (QA 빌드만) AltTester SDK  ──WebSocket──> [AltTester Desktop / Test Hub]
+        │  (QA 빌드만) control_cli SDK  <──TCP 127.0.0.1:13100 (adb forward)── [control-cli / Test Hub]
         └─ shared 패키지(순수 C#)  <── 같은 소스 ──>  server 가 프로젝트 참조
 ```
 
@@ -34,7 +34,6 @@
   tests/Ashveil.Shared.Tests    도메인 단위 테스트 (xUnit)
   tests/Ashveil.Server.Tests    실제 PostgreSQL 통합 테스트
 /infra                          docker-compose.yml, .env.example
-/qa-tests                       AltTester Java(JUnit5) 스모크 테스트 샘플
 /tools                          fetch-bossroom.sh, Unity 컴파일 체크 하네스
 /.github/workflows              server-ci.yml, unity-ci.yml
 /docs                           설계, API, 규칙표, 실행 가이드, 단계별 폰 체크리스트
@@ -113,7 +112,7 @@ Unity Editor를 로컬에서 띄우지 않으므로 **씬·프리팹은 전부 �
    - `Assets/Game/Generated/Scenes/World.unity` 400×400m Terrain(절차적 높이맵·텍스처), CC0 나무·바위, 마을 프랍, 보스 지역 던전 프랍, 조명.
    - URP 파이프라인 에셋 지정(Boss Room `URP/Mobile` 설정 재사용), Build Settings 씬 목록, Android 플레이어 설정.
 3. 몬스터 스폰·봇·NPC 배치는 shared 데이터(`SpawnTable`, `ZoneMap`, `WorldLayout`)를 런타임에 읽어 생성한다. 서버 검증 좌표와 클라이언트 배치가 항상 같다.
-4. UI는 런타임에 코드로 생성한다(`UiFactory`). 프리팹 YAML 직렬화 실수를 원천 차단하고, AltTester로 볼 때 오브젝트 이름이 코드와 1:1로 대응한다.
+4. UI는 런타임에 코드로 생성한다(`UiFactory`). 프리팹 YAML 직렬화 실수를 원천 차단하고, 게임 조작 SDK 로 볼 때 오브젝트 이름이 코드와 1:1로 대응한다.
 
 ## 6. 클라이언트 계층
 
@@ -123,7 +122,7 @@ Unity Editor를 로컬에서 띄우지 않으므로 **씬·프리팹은 전부 �
 | Domain | `Ashveil.Domain` | Shared | 몬스터 AI 상태기계, 봇 의사결정, 자동사냥 정책, 에러 문구 매핑 |
 | Application | `Ashveil.Application` | Shared, Domain, Newtonsoft | `ApiClient`(UnityWebRequest), `Session`, 서비스 |
 | Presentation | `Ashveil.Presentation` | 위 전부 | 부트스트랩, 플레이어·몬스터·봇 컨트롤러, UI, GM 콘솔(`QA_BUILD`) |
-| Editor | `Ashveil.Editor` | 위 전부 | 생성기, 빌드, AltTester 계측(`ALTTESTER`) |
+| Editor | `Ashveil.Editor` | 위 전부 | 생성기, 빌드, QA 계측(`CONTROL_CLI`) |
 
 ## 7. CI 설계 요약
 

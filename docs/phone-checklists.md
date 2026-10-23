@@ -73,10 +73,6 @@ H="-H 'Authorization: Bearer $TOKEN' -H 'X-Character-Id: <CID>'"
 
 ## 6단계 QA 빌드
 
-- [ ] QA APK 첫 화면에 AltTester 연결 팝업이 보이고, Release APK 에는 없다.
-- [ ] `adb reverse tcp:13000 tcp:13000` 후 AltTester Desktop 에서 `ashveil` 앱을 고르면 오브젝트 트리(`BootCanvas/LoginView/...`)가 보인다.
-- [ ] `qa-tests/` 의 JUnit5 스모크 테스트가 통과한다.
-  ```bash
-  cd qa-tests && mvn -q test -Dalt.host=127.0.0.1 -Dalt.port=13000 -Dalt.app=ashveil
-  ```
+- [ ] QA APK 를 켜고 `control-cli ping` 이 `"ok":true` 로 답한다. Release APK 는 「붙지 못했습니다」로 답한다.
+- [ ] `control-cli tree` 에 오브젝트 트리(`BootCanvas/LoginView/...`)가 보이고, `control-cli click LoginButton` 이 로그인 버튼을 누른다.
 - [ ] HUD 의 **GM** 버튼으로 골드·아이템·레벨·순간이동·성향치를 바꾸면 화면과 서버가 함께 바뀐다. Release APK 에는 GM 버튼이 없다.

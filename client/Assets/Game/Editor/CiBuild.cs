@@ -14,9 +14,9 @@ namespace Ashveil.Editor
     public static class CiBuild
     {
         public const string QaDefine = "QA_BUILD";
-
-        /// <summary>QA 빌드 계측(AltTester). com.alttester.sdk 패키지가 있을 때만 Ashveil.Editor.AltTester 어셈블리가 등록한다.</summary>
-        public static Action<string, BuildArgs> QaInstrumentation;
+        /// <summary>control_cli SDK 는 이 정의 심볼이 있을 때만 빌드에 들어간다(QA 빌드 계측).</summary>
+        public const string ControlCliDefine = "CONTROL_CLI";
+        private const string ControlCliPackage = "com.maxihan1.control-cli";
 
         public sealed class BuildArgs
         {
@@ -24,9 +24,6 @@ namespace Ashveil.Editor
             public string OutputPath;
             public int BuildNumber = 1;
             public string ServerUrl;
-            public string AltHost = "127.0.0.1";
-            public int AltPort = 13000;
-            public string AltAppName = "ashveil";
             public string KeystoreName;
             public string KeystorePass;
             public string KeyaliasName;
@@ -48,15 +45,12 @@ namespace Ashveil.Editor
                     OutputPath = Get("customBuildPath"),
                     // CI 는 값이 없을 때 자리 표시자 none 을 넘긴다(빈 값이면 다음 인자가 밀려 들어오므로).
                     ServerUrl = string.Equals(Get("serverUrl"), "none", StringComparison.OrdinalIgnoreCase) ? null : Get("serverUrl"),
-                    AltHost = Get("altHost") ?? "127.0.0.1",
-                    AltAppName = Get("altAppName") ?? "ashveil",
                     KeystoreName = Get("androidKeystoreName"),
                     KeystorePass = Get("androidKeystorePass"),
                     KeyaliasName = Get("androidKeyaliasName"),
                     KeyaliasPass = Get("androidKeyaliasPass"),
                 };
                 if (int.TryParse(Get("buildNumber"), out var number)) args.BuildNumber = Math.Max(1, number);
-                if (int.TryParse(Get("altPort"), out var port)) args.AltPort = port;
                 if (string.IsNullOrEmpty(args.OutputPath)) args.OutputPath = $"Builds/Android/Ashveil-{args.Variant}.apk";
                 if (args.Variant != "qa" && args.Variant != "release") throw new ArgumentException("-buildVariant 는 qa 또는 release 여야 합니다: " + args.Variant);
                 return args;
@@ -85,18 +79,15 @@ namespace Ashveil.Editor
             PlayerSettings.Android.bundleVersionCode = args.BuildNumber;
             // HTTP 평문 통신은 QA 빌드에서만 허용한다(LAN 의 HTTP 서버용). Release 는 HTTPS 서버가 필요하다.
             PlayerSettings.insecureHttpOption = args.IsQa ? InsecureHttpOption.AlwaysAllowed : InsecureHttpOption.NotAllowed;
-            PlayerSettings.SetScriptingDefineSymbols(android, args.IsQa ? QaDefine : "");
+            PlayerSettings.SetScriptingDefineSymbols(android, args.IsQa ? QaDefine + ";" + ControlCliDefine : "");
             EditorUserBuildSettings.buildAppBundle = false;
             ConfigureSigning(args);
             WriteServerConfig(args.ServerUrl);
 
             var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
-            if (args.IsQa)
-            {
-                if (QaInstrumentation == null)
-                    throw new InvalidOperationException("QA 빌드에는 AltTester SDK(com.alttester.sdk)가 필요합니다. tools/ci/enable-alttester.py 로 패키지를 추가하세요.");
-                QaInstrumentation(scenes[0], args);
-            }
+            // SDK 가 없으면 정의 심볼만 있고 조작 포트가 없는 QA 빌드가 조용히 나온다.
+            if (args.IsQa && !File.ReadAllText("Packages/manifest.json").Contains(ControlCliPackage))
+                throw new InvalidOperationException("QA 빌드에는 control_cli SDK 가 필요합니다. 빌드 전에 control-cli instrument client 를 돌리세요(docs/ci.md).");
 
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args.OutputPath)) ?? ".");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
@@ -105,8 +96,7 @@ namespace Ashveil.Editor
                 target = BuildTarget.Android,
                 targetGroup = BuildTargetGroup.Android,
                 locationPathName = args.OutputPath,
-                // AltTester 런타임은 NUnit·TestRunner 를 참조하므로 QA 빌드는 테스트 어셈블리를 포함한다(AltTester 문서 예제와 동일).
-                options = args.IsQa ? BuildOptions.Development | BuildOptions.IncludeTestAssemblies : BuildOptions.None,
+                options = args.IsQa ? BuildOptions.Development : BuildOptions.None,
             });
             var summary = report.summary;
             Debug.Log($"[Build] 결과 {summary.result}, 크기 {summary.totalSize / (1024 * 1024)}MB, 오류 {summary.totalErrors}, 경고 {summary.totalWarnings}, {summary.totalTime}");

@@ -32,7 +32,7 @@
 | D-26 | 로컬에서 **Unity 관리 DLL을 참조해 C# 컴파일만 검사하는 하네스**(`tools/unity-compile-check`)를 둔다 | CI 반복 비용이 크다. 푸시 전에 컴파일 오류를 잡는다. Editor 실행이 아니라 DLL 참조만 쓰므로 메모리 제약을 지킨다 |
 | D-27 | API 초안에 없던 **`POST /characters/{id}/use-item`** 을 추가한다 | 물약 퀵슬롯·자동사냥 물약은 인벤토리를 바꾸므로 서버 권위 원칙상 서버 API가 필요하다 |
 | D-28 | Unity 버전은 **6000.0.84f1** (Boss Room 원본은 6000.0.52f1) | CVE-2025-59489 가 6000.0.58f2 미만 빌드에 영향을 준다(Android 코드 실행). 같은 6000.0 LTS 라인이라 Boss Room 에셋 호환성 문제는 낮다 |
-| D-29 | AltTester SDK(2.3.2, GPL-3)는 **QA 빌드 잡에서만 manifest 에 추가**한다 | SDK 런타임 105개 파일 중 8개만 `#if ALTTESTER` 로 감싸져 있고 link.xml 로 보존되므로, 패키지가 있으면 Release 에도 코드가 들어간다. 패키지 자체를 빼야 "Release 는 AltTester 제외" 가 지켜진다. QA 전용 코드는 여전히 정의 심볼(`ALTTESTER`, `QA_BUILD`)로 분기한다 |
+| D-29 | AltTester SDK(2.3.2, GPL-3)는 **QA 빌드 잡에서만 manifest 에 추가**한다 — D-39 로 AltTester 를 뺐다 | SDK 런타임 105개 파일 중 8개만 `#if ALTTESTER` 로 감싸져 있고 link.xml 로 보존되므로, 패키지가 있으면 Release 에도 코드가 들어간다. 패키지 자체를 빼야 "Release 는 AltTester 제외" 가 지켜진다. QA 전용 코드는 여전히 정의 심볼(`ALTTESTER`, `QA_BUILD`)로 분기한다 |
 | D-30 | GameCI는 **unity-builder@v4, unity-test-runner@v4**, Unity Personal 라이선스(Secrets 3종) → **D-34 로 대체** | 공식 문서 예제가 v4 기준이고 안정적이다. unity-activate 는 필요 없다 |
 | D-31 | 미니맵은 **UI 점(dot) 방식**(카메라 렌더 텍스처 아님) | 모바일에서 카메라 하나를 더 그리는 비용이 없고, AltTester로 점 오브젝트를 바로 확인할 수 있다 |
 | D-32 | 우리 스크립트·에셋의 **`.meta` 파일은 커밋하지 않는다** | 로컬에 Editor 가 없어 Unity 가 만든 meta 를 받을 수 없다. 씬·프리팹이 같은 CI 실행 안에서 생성되어 GUID 가 그 실행 안에서만 일관되면 충분하다. 사람이 Editor 로 작업하게 되면 그때 meta 를 커밋한다 |
@@ -42,3 +42,4 @@
 | D-36 | QA 전용 **어드민 API**(`/admin/*`, `X-Admin-Key`)와 서버가 제공하는 **백오피스 웹**(`/backoffice`, 단일 HTML)을 둔다. GM API 는 그대로 둔다 | GM API 는 로그인한 본인 캐릭터만 다뤄서 Test Hub 가 밖에서 사전 조건을 만들고 결과를 검증할 수 없다. 플레이어 JWT 와 분리한 고정 키 하나로 충분하고, QA 환경 + 키 설정이 둘 다 있어야 열린다. 백오피스는 키를 담지 않고 사용자가 입력한 키로 같은 API 를 부른다 |
 | D-37 | 확률 판정을 **결과 큐로 고정**(강화·봇 전리품·사망 드랍)할 수 있게 한다 | 확률 기능을 매번 같은 결과로 자동 테스트해야 한다. 난수 값을 넣는 방식은 현재 확률표에 따라 의미가 바뀌어 테스트가 깨지기 쉽다. 결과 자체를 지정하는 쪽이 읽기 쉽다. 안전 구간 강화는 규칙상 항상 성공이라 제외한다 |
 | D-38 | **몬스터 스폰 표를 서버 DB**(`monster_spawns`)로 옮기고 클라이언트는 월드 입장 때 받는다. 몬스터 능력치는 shared 에 둔다 | 몬스터 수·위치를 APK 재빌드 없이 바꾸려는 요구. 처치 검증도 같은 표를 쓰므로 서버가 원본이어야 한다. 능력치까지 옮기면 클라이언트 전투 계산 전체를 서버 데이터에 맞춰야 해서 이번 범위에서 뺐다 |
+| D-39 | QA 빌드의 게임 조작 SDK 를 AltTester 에서 **control_cli**(MIT)로 바꾼다. 저장소에는 넣지 않고 QA 빌드 잡이 `control-cli instrument` 로 manifest(커밋 고정)와 asmdef 참조를 더하고, `CiBuild` 가 정의 심볼 `CONTROL_CLI` 를 더한다. `qa-tests/`(AltTester Java)는 지운다 | Test Hub 가 AltTester Desktop 없이 게임을 직접 조작한다(무료판 화면 켜 두기 · 헤드리스는 Pro). 둘 다 `Input` 을 바꿔치기해 같이 넣으면 부딪친다. SDK 는 `CONTROL_CLI` 가 없으면 코드가 아예 빌드에 안 들어가 Release 에 남지 않는다. 테스트 어셈블리 포함(`IncludeTestAssemblies`)은 AltTester 때문이라 같이 뺐다. D-35 의 근거였던 AltTester 는 사라졌지만 라이선스는 그대로 둔다 |

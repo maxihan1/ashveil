@@ -35,6 +35,7 @@ env:
   UNITY_VERSION: 6000.0.84f1
   UNITY_CHANGESET: 78ab6fc243d5
   BOSSROOM_COMMIT: 1299ba4fc97d83b634e7d32a86c438ba668d7f9c
+  CONTROL_CLI_REF: cad391ec591d9f0f3cce347561d1c273def82570
 
 jobs:
   license:
@@ -158,9 +159,15 @@ jobs:
           BOSSROOM_CACHE: ${{ github.workspace }}/.cache/bossroom
         run: bash tools/fetch-bossroom.sh
 
-      - name: QA 빌드 전용 AltTester SDK 추가
+      # 게임 조작 SDK 는 저장소에 넣지 않고 QA 빌드에서만 더한다(D-39). 커밋을 고정해 빌드가 재현된다.
+      # npx 로 git 패키지를 받으면 npm 이 「GitFetcher requires an Arborist constructor」로 멈춰서 받아서 빌드한다.
+      - name: QA 빌드 전용 control_cli SDK 추가
         if: matrix.variant == 'qa'
-        run: python3 tools/ci/enable-alttester.py client/Packages/manifest.json 2.3.2
+        run: |
+          git clone -q https://github.com/maxihan1/control_cli.git "$RUNNER_TEMP/control_cli"
+          git -C "$RUNNER_TEMP/control_cli" checkout -q "$CONTROL_CLI_REF"
+          npm --prefix "$RUNNER_TEMP/control_cli" ci --no-audit --no-fund
+          node "$RUNNER_TEMP/control_cli/dist/main.js" instrument client --ref "$CONTROL_CLI_REF"
 
       - uses: actions/cache@v6
         with:
@@ -191,9 +198,6 @@ jobs:
             -buildVariant ${{ matrix.variant }}
             -buildNumber ${{ github.run_number }}
             -serverUrl ${{ inputs.serverUrl || vars.GAME_SERVER_URL || 'none' }}
-            -altHost ${{ vars.ALTTESTER_HOST || '127.0.0.1' }}
-            -altPort ${{ vars.ALTTESTER_PORT || '13000' }}
-            -altAppName ${{ vars.ALTTESTER_APP_NAME || 'ashveil' }}
 
       - uses: actions/upload-artifact@v7
         with:

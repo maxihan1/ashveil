@@ -18,7 +18,7 @@ Boss Room 에서는 아트만 쓰고 Netcode·로비·UGS 코드와 패키지는
 
 | 라이브러리 | 쓰는 곳 | 라이선스 |
 |---|---|---|
-| AltTester Unity SDK 2.3.2 (`com.alttester.sdk`) | **QA 빌드에만** CI가 추가한다. Release 빌드에는 들어가지 않는다 | GPL-3.0 |
+| control_cli SDK (`com.maxihan1.control-cli`) | **QA 빌드에만** CI가 추가한다. Release 빌드에는 들어가지 않는다 | MIT |
 | Newtonsoft.Json (`com.unity.nuget.newtonsoft-json`) | 클라이언트 JSON 직렬화 | MIT |
 | ASP.NET Core, EF Core, Npgsql, EFCore.NamingConventions, Swashbuckle.AspNetCore.SwaggerUI | 서버 | MIT / Apache-2.0 / PostgreSQL License |
 | xUnit | 서버 테스트 | Apache-2.0 |

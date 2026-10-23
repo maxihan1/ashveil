@@ -1,4 +1,4 @@
-# 실행 가이드 (서버 → 폰 → AltTester)
+# 실행 가이드 (서버 → 폰 → 게임 조작)
 
 준비물은 Mac(Docker Desktop), 같은 Wi-Fi 의 Android 폰, GitHub Actions 가 만든 APK 다.
 
@@ -52,20 +52,15 @@ adb push server-config.json /sdcard/Android/data/com.nimbusgames.ashveil.qa/file
 
 우선순위는 런타임 설정 파일 → 빌드 기본값 → `http://127.0.0.1:8080` 이다.
 
-## 4. AltTester Desktop 연결 (QA 빌드)
+## 4. 게임 조작 SDK (control_cli, QA 빌드)
 
-- 사용 버전은 **AltTester Unity SDK 2.3.2** 다. AltTester Desktop 도 **2.x**(SDK 2.3.x 와 호환되는 버전)를 쓴다.
-- QA 빌드는 기본으로 `127.0.0.1:13000` 의 AltTester 서버에 접속한다. USB 로 연결한 폰이면 포트를 Mac 으로 넘긴다.
-  ```bash
-  adb reverse tcp:13000 tcp:13000
-  ```
-- Wi-Fi 로만 연결하려면 빌드 Variable `ALTTESTER_HOST` 에 Mac 의 LAN IP 를 넣고 다시 빌드한다.
+- QA 빌드는 폰 안 `127.0.0.1:13100` 에서 명령을 받는다(D-39). 폰 밖에서는 `adb forward` 로만 닿는다 — CLI 가 명령마다 건다.
 - 순서
-  1. Mac 에서 AltTester Desktop 실행 (기본 포트 13000).
-  2. 폰에서 Ashveil QA 실행. 첫 화면 상단의 AltTester 초록 팝업에 연결 상태가 뜬다.
-  3. AltTester Desktop 의 앱 목록에 `ashveil` 이 보이면 선택 → 오브젝트 트리가 나온다.
-- 여러 기기(Device Farm)를 동시에 붙이면 기기마다 앱 이름이 같아도 고유 ID로 구분된다. 묶음을 나누려면 `ALTTESTER_APP_NAME` 을 바꿔 빌드한다.
-- 라이선스 메모. AltTester Lite(무료)는 GUI 1연결이다. CI·컨테이너에서 서버를 헤드리스로 돌리거나 여러 연결을 쓰려면 AltTester Pro 가 필요하다.
+  1. `npm install -g github:maxihan1/control_cli`
+  2. 폰에서 Ashveil QA 실행 → USB 로 Mac 에 잇는다.
+  3. `control-cli ping` → `{"ok":true,"app":"com.nimbusgames.ashveil.qa",...}` 이 나오면 붙었다.
+  4. `control-cli tree` 로 오브젝트 트리, `control-cli click LoginButton` 으로 누르기, `control-cli errors` 로 게임 오류, `control-cli layout` 으로 화면 잘림 검사.
+- 폰이 여러 대면 `-s <시리얼>` 을 붙인다. 명령 · 응답 꼴은 [control_cli README](https://github.com/maxihan1/control_cli) 가 정본이다.
 
 ### 자주 찾는 오브젝트 이름
 
@@ -83,5 +78,5 @@ adb push server-config.json /sdcard/Android/data/com.nimbusgames.ashveil.qa/file
 |---|---|
 | 로그인 시 "서버에 연결할 수 없습니다" | 폰과 Mac 이 같은 Wi-Fi 인지, 서버 주소가 LAN IP 인지, Mac 방화벽이 8080 을 막지 않는지. 폰 브라우저로 `http://<IP>:8080/health` 를 열어 본다 |
 | Release 빌드만 접속 실패 | 정상 동작이다. Release 는 HTTP 를 막는다 |
-| AltTester 앱 목록이 비어 있음 | `adb reverse` 를 했는지, Desktop 포트가 13000 인지, QA 빌드인지 |
+| `control-cli ping` 이 「게임 포트 13100 에 붙지 못했습니다」 | QA 빌드인지(Release 에는 SDK 가 없다), 앱이 앞에 켜져 있는지, `adb devices` 에 폰이 보이는지 |
 | 로그인 직후 다시 로그인 화면 | 서버를 `down -v` 로 초기화했거나 JWT_KEY 를 바꾸면 기존 토큰이 무효가 된다 |
