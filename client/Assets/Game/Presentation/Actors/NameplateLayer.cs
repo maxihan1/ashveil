@@ -145,14 +145,15 @@ namespace Ashveil.Presentation
             if (showHp && damaged) plate.Hp.Set((float)actor.Hp / actor.MaxHp);
         }
 
-        private static string LabelOf(Actor actor)
+        /// <summary>기획서 §9 봇 이름표 꼴 「이름 Lv.N」. 몬스터·플레이어도 같은 꼴로 맞춘다.</summary>
+        public static string LabelOf(Actor actor)
         {
             switch (actor.Team)
             {
                 case Team.Monster:
                 case Team.Bot:
                 case Team.Player:
-                    return $"Lv.{actor.Level} {actor.DisplayName}";
+                    return $"{actor.DisplayName} Lv.{actor.Level}";
                 default:
                     return actor.DisplayName;
             }
