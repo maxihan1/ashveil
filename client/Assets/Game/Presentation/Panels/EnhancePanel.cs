@@ -1,5 +1,6 @@
 // 강화 창: 장비 선택 → 맞는 주문서·비용 표시 → 서버 판정 결과(성공·실패·파괴) 연출
 using System.Linq;
+using System.Threading.Tasks;
 using Ashveil.Application;
 using Ashveil.Shared;
 using Ashveil.Shared.Dto;
@@ -11,6 +12,8 @@ namespace Ashveil.Presentation
     public sealed class EnhancePanel : PanelBase
     {
         private const long GoldCostPerLevel = 100; // 표시용. 실제 비용은 서버 설정이 판정한다.
+        // 결과 뒤 이 시간 동안 버튼을 잠근다. 서버도 이 안에 온 강화를 COOLDOWN 으로 막는다(두 번 누르기).
+        private static readonly int RepeatGuardMs = new EnhanceConfig().RepeatGuardMilliseconds;
 
         private RectTransform _list;
         private Text _detail;
@@ -124,6 +127,7 @@ namespace Ashveil.Presentation
                     // 장착 장비 강화는 스탯이 바뀌므로 캐릭터 정보를 다시 받는다.
                     if (item.EquippedSlot != null) GameContext.Player.Apply(await GameContext.Api.GetCharacterAsync());
                     if (this != null) ShowResult(response);
+                    await Task.Delay(RepeatGuardMs);
                 }
                 finally
                 {

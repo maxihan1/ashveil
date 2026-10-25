@@ -28,6 +28,8 @@ namespace Ashveil.Shared
         public int SafeLevel { get; set; } = 3;
         public int MaxLevel { get; set; } = 10;
         public long GoldCostPerLevel { get; set; } = 100;
+        /// <summary>같은 캐릭터가 직전 강화 뒤 이 시간(ms) 안에 다시 강화하면 COOLDOWN 으로 막는다(「강화하기」 두 번 누르기). 0 이면 끈다.</summary>
+        public int RepeatGuardMilliseconds { get; set; } = 500;
         public List<EnhanceRate> Rates { get; set; } = new List<EnhanceRate>();
     }
 

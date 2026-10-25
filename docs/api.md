@@ -81,6 +81,8 @@ PkHistoryDto = { kills, deaths, alignment: AlignmentDto,
 |---|---|---|---|
 | POST | `/enhance` | `{ itemId, scrollId }` | `{ result: Success|Fail|Destroy, item: ItemDto?, fromLevel, toLevel, goldSpent, inventory: InventoryDto }` |
 
+같은 캐릭터가 직전 강화 뒤 0.5초(`Game:Enhance:RepeatGuardMilliseconds`, 0 이면 끔) 안에 다시 요청하면 409 `COOLDOWN` 이고 주문서·골드를 쓰지 않는다(「강화하기」 두 번 누르기 방지). 강화 창도 결과 뒤 같은 시간 동안 버튼을 잠근다.
+
 ## 전투 (`X-Character-Id`)
 
 | 메서드 | 경로 | 요청 | 응답 |

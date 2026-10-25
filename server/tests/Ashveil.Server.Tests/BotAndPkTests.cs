@@ -29,7 +29,10 @@ public class BotAndPkTests(ServerFixture server) : IClassFixture<ServerFixture>
         Assert.All(bots, b => Assert.Contains(b.Equipment, i => i.EquippedSlot == EquipSlot.Weapon));
         // 장착 외 장비 2 + 소모품 2 (다른 테스트가 처치해 전리품 1개를 가져갔을 수 있다)
         Assert.All(bots, b => Assert.True(b.ItemCount >= b.Equipment.Count + 3));
-        Assert.Contains(bots, b => b.Temperament == Temperament.Aggressive);
+        // 기획서 §9: 전체 20명 중 평화형 40%, 반격형 40%, 선공형 20%
+        Assert.Equal(8, bots.Count(b => b.Temperament == Temperament.Peaceful));
+        Assert.Equal(8, bots.Count(b => b.Temperament == Temperament.Retaliate));
+        Assert.Equal(4, bots.Count(b => b.Temperament == Temperament.Aggressive));
         Assert.Equal(bots.Count, bots.Select(b => b.Name).Distinct().Count());
     }
 

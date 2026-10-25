@@ -46,7 +46,7 @@ public sealed class RuntimeGameConfig
     private static EnhanceConfig Clone(EnhanceConfig c) => new()
     {
         SafeLevel = c.SafeLevel, MaxLevel = c.MaxLevel, GoldCostPerLevel = c.GoldCostPerLevel,
-        Rates = c.Rates.Select(Clone).ToList(),
+        RepeatGuardMilliseconds = c.RepeatGuardMilliseconds, Rates = c.Rates.Select(Clone).ToList(),
     };
 
     private static EnhanceRate Clone(EnhanceRate r) => new()

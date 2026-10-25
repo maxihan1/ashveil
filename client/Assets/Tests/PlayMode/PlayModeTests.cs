@@ -157,5 +157,15 @@ namespace Ashveil.Tests
             Assert.AreNotEqual(Ashveil.Domain.MonsterState.Wander, monster.State);
             Assert.Less(Vector3.Distance(monster.transform.position, WorldServices.Player.transform.position), start);
         }
+
+        [Test]
+        public void BotNameplate_ShowsNameThenLevel()
+        {
+            // 기획서 §9: 봇 머리 위에는 「이름 Lv.N」
+            var bot = new GameObject("Bot_Nameplate").AddComponent<Actor>();
+            bot.Init(Team.Bot, "미릴온", 5, 100, 10, 5);
+            try { Assert.AreEqual("미릴온 Lv.5", NameplateLayer.LabelOf(bot)); }
+            finally { Object.Destroy(bot.gameObject); }
+        }
     }
 }

@@ -88,6 +88,11 @@ public static class ShopEndpoints
             await db.InTransactionAsync(async () =>
             {
                 character = await db.LockOwnedCharacterAsync(http.CharacterId(), http.AccountId());
+                // 「강화하기」 두 번 누르기: 첫 응답 뒤 곧바로 온 요청은 막는다. 캐릭터 행 잠금 안이라 동시 요청도 한 번만 통과한다.
+                var since = now - TimeSpan.FromMilliseconds(enhance.RepeatGuardMilliseconds);
+                if (enhance.RepeatGuardMilliseconds > 0
+                    && await db.EnhanceHistories.AnyAsync(h => h.CharacterId == character.Id && h.CreatedAt > since))
+                    throw GameErrors.Conflict(ErrorCodes.Cooldown);
                 var items = await db.LoadItemsAsync(OwnerKind.Character, character.Id);
                 target = items.FirstOrDefault(i => i.Id == req.ItemId) ?? throw GameErrors.NotFound("강화할 아이템");
                 var scroll = items.FirstOrDefault(i => i.Id == req.ScrollId) ?? throw GameErrors.NotFound("주문서");

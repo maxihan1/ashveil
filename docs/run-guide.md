@@ -52,6 +52,8 @@ adb push server-config.json /sdcard/Android/data/com.nimbusgames.ashveil.qa/file
 
 우선순위는 런타임 설정 파일 → 빌드 기본값 → `http://127.0.0.1:8080` 이다.
 
+디바이스 팜 · QA Hub 자동 실행은 빌드 기본값만 쓴다(팜이 폰을 놓을 때 앱 데이터와 함께 설정 파일을 지운다). 그래서 `GAME_SERVER_URL` 을 QA Hub 대상 서버 줄 주소와 같게 둔다(지금 `http://192.168.1.14:8080`). 맥 LAN 주소라 바뀌면 변수도 바꾸고 QA APK 를 다시 만든다.
+
 ## 4. 게임 조작 SDK (control_cli, QA 빌드)
 
 - QA 빌드는 폰 안 `127.0.0.1:13100` 에서 명령을 받는다(D-39). 폰 밖에서는 `adb forward` 로만 닿는다 — CLI 가 명령마다 건다.
