@@ -175,3 +175,31 @@ public class ShopAndEnhanceTests(ServerFixture server) : IClassFixture<ServerFix
         Assert.Equal(500, (await client.MeAsync(character.Id)).Gold);
     }
 }
+
+public class EnhanceRepeatGuardTests(EnhanceGuardServerFixture server) : IClassFixture<EnhanceGuardServerFixture>
+{
+    [Fact]
+    public async Task Enhance_PressedTwiceQuickly_AppliesOnce()
+    {
+        // 「강화하기」 두 번 누르기: 첫 응답 뒤 바로 온 두 번째 요청은 주문서·골드를 쓰지 않고 COOLDOWN 이다.
+        var (client, character) = await server.NewPlayerAsync();
+        await client.GmGoldAsync(1000);
+        var inventory = await client.GmItemAsync(ItemCatalog.ScrollWeapon, 3);
+        var weapon = inventory.Items.Single(i => i.EquippedSlot == EquipSlot.Weapon);
+        var scroll = inventory.Items.Single(i => i.TemplateId == ItemCatalog.ScrollWeapon);
+        var request = new EnhanceRequest { ItemId = weapon.Id, ScrollId = scroll.Id };
+
+        var first = await client.PostAsync<EnhanceResponse>("/enhance", request);
+        await client.PostErrorAsync("/enhance", request, HttpStatusCode.Conflict, ErrorCodes.Cooldown);
+
+        var after = await client.InventoryAsync(character.Id);
+        Assert.Equal(1, first.Item!.EnhanceLevel);
+        Assert.Equal(2, after.Items.Single(i => i.Id == scroll.Id).Quantity);
+        Assert.Equal(1500 - 100, after.Gold);
+        Assert.Equal(1, after.Items.Single(i => i.Id == weapon.Id).EnhanceLevel);
+
+        // 막는 시간이 지나면 다시 강화할 수 있다.
+        await Task.Delay(new EnhanceConfig().RepeatGuardMilliseconds + 100);
+        Assert.Equal(2, (await client.PostAsync<EnhanceResponse>("/enhance", request)).Item!.EnhanceLevel);
+    }
+}

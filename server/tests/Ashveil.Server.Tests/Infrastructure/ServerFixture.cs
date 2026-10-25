@@ -14,6 +14,8 @@ namespace Ashveil.Server.Tests.Infrastructure;
 public class ServerFixture : IAsyncLifetime
 {
     protected virtual string EnvironmentName => "Qa";
+    /// <summary>강화 연타 막기(ms). 테스트는 강화를 잇달아 부르므로 기본은 끈다.</summary>
+    protected virtual int EnhanceRepeatGuardMilliseconds => 0;
 
     public ControlledRandom Random { get; } = new();
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
@@ -34,6 +36,7 @@ public class ServerFixture : IAsyncLifetime
             b.UseSetting("ConnectionStrings:Game", connection);
             b.UseSetting("Jwt:Key", "integration-test-signing-key-0123456789abcdef");
             b.UseSetting("Admin:Key", AdminKey);
+            b.UseSetting("Game:Enhance:RepeatGuardMilliseconds", EnhanceRepeatGuardMilliseconds.ToString());
             b.ConfigureServices(s =>
             {
                 s.RemoveAll<IRandomSource>();
@@ -82,6 +85,12 @@ public class ServerFixture : IAsyncLifetime
 public sealed class ProductionServerFixture : ServerFixture
 {
     protected override string EnvironmentName => "Production";
+}
+
+/// <summary>강화 연타 막기를 운영 기본값으로 켠 서버.</summary>
+public sealed class EnhanceGuardServerFixture : ServerFixture
+{
+    protected override int EnhanceRepeatGuardMilliseconds => new EnhanceConfig().RepeatGuardMilliseconds;
 }
 
 /// <summary>미리 넣은 값을 차례로 쓰고, 비면 기본값을 돌려주는 난수.</summary>
