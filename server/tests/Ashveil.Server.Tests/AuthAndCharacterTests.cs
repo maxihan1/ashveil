@@ -53,6 +53,19 @@ public class AuthAndCharacterTests(ServerFixture server) : IClassFixture<ServerF
     }
 
     [Fact]
+    public async Task MalformedJsonField_ReturnsValidationFailedBody()
+    {
+        // 필드 타입이 틀려 모델 바인딩이 실패해도 빈 본문이 아니라 { code, message } 를 준다.
+        var (client, _) = await server.NewPlayerAsync();
+        await GameClient.ExpectErrorAsync(await client.Http.PostAsync("/auth/signup",
+                new StringContent("""{"username":48271635,"password":"password1"}""", System.Text.Encoding.UTF8, "application/json")),
+            HttpStatusCode.BadRequest, ErrorCodes.ValidationFailed);
+        await GameClient.ExpectErrorAsync(await client.Http.PostAsync("/shop/buy",
+                new StringContent("""{"templateId":"sword_short","quantity":"two"}""", System.Text.Encoding.UTF8, "application/json")),
+            HttpStatusCode.BadRequest, ErrorCodes.ValidationFailed);
+    }
+
+    [Fact]
     public async Task ProtectedEndpoint_WithoutToken_ReturnsUnifiedError()
     {
         var client = server.NewClient();

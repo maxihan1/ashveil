@@ -35,6 +35,8 @@ builder.Services.AddDbContext<GameDbContext>((sp, o) => o
     .UseSnakeCaseNamingConvention());
 
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+// 모델 바인딩 실패(필드 타입 오류 등)를 Development 밖에서도 예외로 올려 400 VALIDATION_FAILED 본문을 준다. 끄면 빈 400 이다.
+builder.Services.Configure<RouteHandlerOptions>(o => o.ThrowOnBadRequest = true);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme).Configure<JwtOptions>((o, jwt) =>
