@@ -57,6 +57,8 @@ public sealed class BotService(GameDbContext db, RuntimeGameConfig config, IRand
         var usedNames = (await db.Bots.Select(b => b.Name).ToListAsync()).ToHashSet();
         usedNames.UnionWith(db.Bots.Local.Select(b => b.Name));
 
+        // 성향 순번은 전 구역을 이어서 센다. 구역마다 0부터 세면 8·10·2명이 5의 배수가 아니라 합이 50·35·15% 가 된다.
+        var order = Populations.Where(p => p.Key < zone).Sum(p => p.Value.Count);
         var created = new List<Bot>();
         for (var i = 0; i < population.Count; i++)
         {
@@ -69,7 +71,7 @@ public sealed class BotService(GameDbContext db, RuntimeGameConfig config, IRand
                 Level = random.Next(population.MinLevel, population.MaxLevel + 1),
                 Zone = zone,
                 // 평화형 40%, 반격형 40%, 선공형 20%
-                Temperament = (i % 5) switch { 0 or 1 => Temperament.Peaceful, 2 or 3 => Temperament.Retaliate, _ => Temperament.Aggressive },
+                Temperament = ((order + i) % 5) switch { 0 or 1 => Temperament.Peaceful, 2 or 3 => Temperament.Retaliate, _ => Temperament.Aggressive },
             };
             db.Bots.Add(bot);
             created.Add(bot);
