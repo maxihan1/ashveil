@@ -36,3 +36,6 @@
 - QA 서명 검증(빌드 39547973661): QA APK 인증서 SHA-256 이 QA 키스토어와 같다(9ED3…DDAA). Release 는 디버그 서명. 공개 빌드 로그에 비밀번호·키스토어 평문이 없는 것도 확인했다.
 - 2026-10-23 QA 빌드 계측을 AltTester 에서 control_cli SDK 로 바꿨다(D-39). AltTester 와 control_cli 는 둘 다 `Input` 을 바꿔치기해 같이 넣을 수 없다. SDK 는 QA 잡의 `control-cli instrument` 가 커밋을 고정해 더한다(`unity-ci.yml` 의 `CONTROL_CLI_REF`).
 - 2026-10-24 QA 빌드 잡 끝에 QA APK 를 QA Hub 에 올리는 단계를 더했다(D-40). versionCode 는 이미 `-buildNumber ${{ github.run_number }}` 라 버전 규칙은 그대로다. Secret `QAHUB_TOKEN` · `QAHUB_URL` 과 Variable `QAHUB_ENV` 를 넣기 전까지는 경고만 남기고 건너뛴다.
+- 2026-10-25 QA Hub 시험(GAME-F1-14) 버그 4건을 고쳤다. 강화 두 번 누르기는 강화 창이 응답 대기 중에는 이미 버튼을 막고 있어서, 실제로는 첫 응답 뒤 두 번째 요청이 들어간 것이다. 서버가 두 요청을 가를 단서는 시간뿐이라 캐릭터별 0.5초 가드(`Game:Enhance:RepeatGuardMilliseconds`, 직전 `enhance_histories` 시각 기준)를 넣었다. 요청 키(idempotency key) 방식은 두 번 누르면 키도 둘이라 이 경우를 못 막는다. 기획서에 없는 「오류 추정」 규칙이다.
+- 머리 위 이름표는 기획서 §9 를 따라 「이름 Lv.N」 으로 바꿨다(몬스터·플레이어도 같은 함수). HUD 대상 이름 칸은 기획서 규칙이 없어 「Lv.N 이름」 으로 남아 있다.
+- 디바이스 팜은 폰을 놓을 때 앱 데이터를 지우므로 QA Hub 자동 실행에서는 빌드 기본값(`GAME_SERVER_URL`)만 쓰인다.
