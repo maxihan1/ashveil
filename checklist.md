@@ -63,6 +63,7 @@
 
 ## 9단계 운영 서버 이전 (OPS-F4-06b, 2026-10-27 추가)
 - [x] `infra/prod/` — `127.0.0.1:18081` · `Qa` · DB 포트 안 엶 · 비밀값 서버에서 1회 생성 (맥에서 배포 스크립트 시험) (D-41)
-- [ ] 서버 `/opt/ashveil` clone · `deploy.sh` · host Caddy `game` 블록 · 백업 `DBS` 에 `ashveil-postgres:ashveil`
-- [ ] 저장소 Variable `GAME_SERVER_URL` = `https://game.maxihan.com` · QA APK 다시 빌드
-- [ ] 폰 브라우저 · 새 QA APK 로 `https://game.maxihan.com` 접속
+- [x] 서버 `/opt/ashveil` clone · `deploy.sh` · host Caddy `game` 블록 · 백업 `DBS` 에 `ashveil-postgres:ashveil` + `FILES` 에 `/opt/ashveil/.env` (Auth_platform PR #23)
+- [x] 저장소 Variable `GAME_SERVER_URL` = `https://game.maxihan.com` · QA APK 다시 빌드 (빌드 47, run 40442106970)
+- [x] 폰 브라우저로 `https://game.maxihan.com/health` (사용자 확인) · 맥에서 가입 · 로그인
+- [ ] 새 QA APK(빌드 47) 폰 설치 · 로그인 (사용자, 선택)

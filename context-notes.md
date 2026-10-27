@@ -42,3 +42,7 @@
 - 2026-10-27 QA 대상 게임 서버를 운영 서버 `/opt/ashveil` 로 옮긴다(OPS-F4-06b, D-41). 서버가 공개 저장소를 `/opt/ashveil/src` 에 clone 해 빌드하고, 비밀값은 checkout 밖 `/opt/ashveil/.env` 에 둔다(빌드 컨텍스트 · git 에 안 들어간다). 포트는 Auth_platform `infra/edge/README.md` 포트 표의 `18081`.
 - `deploy.sh` 는 `git pull` 을 하지 않는다 — 도는 중인 스크립트 파일이 pull 로 바뀌면 bash 가 바뀐 자리부터 읽는다. `.env` 없이 DB 볼륨만 있으면 멈춘다(새 비밀번호가 볼륨 안 role 과 어긋난다).
 - 맥 시험: 프로젝트 이름이 맥 개발 compose 와 같은 `ashveil` 이라 `COMPOSE_PROJECT_NAME=ashveil-prodtest` 로 돌렸다(같은 이름이면 맥의 `ashveil-db-1` 을 다시 만든다). health 200 · `environment` Qa · 어드민 키 없음 401 · 있음 200 · DB 포트 없음 · 덤프 TABLE DATA 13건 · 재실행 때 `.env` 그대로 · `.env` 지우면 ❌ 로 멈춤.
+- 2026-10-27 OPS-F4-06b 서버 반영. `/opt/ashveil/src` clone(0b23400) → `deploy.sh` 첫 실행 `✅ … {"status":"ok","environment":"Qa"}` · `.env` 600 · ashveil-postgres 포트 없음. host Caddy 는 Auth_platform main 판(game 블록, PR #23)을 F4-07 과 한 번에 올렸다. 백업 한 번 `ashveil.dump 28K · TABLE DATA 13건` · `files 3개(… /opt/ashveil/.env)`.
+- 바깥 확인(맥): `https://game.maxihan.com/health` 200 · Let's Encrypt(~2027-01-25) · `/admin` 키 없음 401 · 옛 기본키 401 · 가입 201(accountId 1) · 로그인 토큰. 확인용 계정 `opscheck1345` 가 남아 있다(백오피스 「테스트 계정 정리」로 지워도 된다).
+- QA APK 빌드 47(run 40442106970) — 로그 `[Build] 기본 서버 주소: https://game.maxihan.com` (qa · release). 이제 HTTPS 라 Release 빌드도 이 서버로 시험할 수 있다.
+- QA Hub 쪽에 넘길 것(OPS-F4-07 「대상 서버 주소를 새 도메인으로」): Ashveil 대상 서버 줄 주소 `https://game.maxihan.com` · 어드민 키는 서버 `/opt/ashveil/.env` 의 `ADMIN_KEY`(대화 · 로그에 찍지 않는다) · 새 DB 라 그 줄의 게임 계정은 가입 API 로 다시 만든다. 맥 Ashveil 컨테이너(`ashveil-db-1` · `ashveil-server-1`, 이미 멈춤)는 OPS-F4-08 이 정리한다.
