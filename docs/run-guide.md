@@ -31,7 +31,7 @@ curl http://localhost:8080/health   # {"status":"ok","environment":"Qa"}
 QA Hub · 폰이 쓰는 대상 서버다. 운영 서버 `101.79.19.193` 의 `/opt/ashveil` 에서 돌고, host Caddy 가 `127.0.0.1:18081` 로 넘긴다(사이트 블록 원본은 Auth_platform `infra/edge/Caddyfile`). DB 는 포트를 열지 않는다.
 
 ```bash
-# 처음 한 번 (서버 root)
+# 처음 한 번 (서버 root). 작업 브랜치라 PR #1 이 main 에 들어가면 서버도 git -C /opt/ashveil/src switch main
 git clone -q -b worktree-game-dev https://github.com/maxihan1/ashveil.git /opt/ashveil/src
 # 배포마다 — .env 가 없으면 처음 한 번 만든다(JWT_KEY · ADMIN_KEY · DB_PASSWORD, openssl rand)
 git -C /opt/ashveil/src pull --ff-only && /opt/ashveil/src/infra/prod/deploy.sh

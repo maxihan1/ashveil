@@ -12,19 +12,18 @@ if [ ! -f "$ENV_FILE" ]; then
   if docker volume inspect ashveil-db-data >/dev/null 2>&1; then
     echo "❌ $ENV_FILE 없이 DB 볼륨 ashveil-db-data 만 있다 — 옛 .env 를 되살리거나 볼륨을 지운 뒤 다시"; exit 1
   fi
-  (umask 077; cat > "$ENV_FILE" <<EOF
-JWT_KEY=$(openssl rand -hex 32)
-ADMIN_KEY=$(openssl rand -hex 24)
-DB_PASSWORD=$(openssl rand -hex 24)
-EOF
-  )
+  # 한 줄에 하나씩 변수로 받는다 — heredoc 안이나 한 줄에 여럿이면 openssl 실패를 set -e 가 못 잡아 빈 값 .env 가 남는다
+  jwt=$(openssl rand -hex 32)
+  admin=$(openssl rand -hex 24)
+  db=$(openssl rand -hex 24)
+  (umask 077; printf 'JWT_KEY=%s\nADMIN_KEY=%s\nDB_PASSWORD=%s\n' "$jwt" "$admin" "$db" > "$ENV_FILE")
   echo "  $ENV_FILE 를 만들었다 (JWT_KEY · ADMIN_KEY · DB_PASSWORD)"
 fi
 
 docker compose -f "$SRC/infra/prod/docker-compose.yml" --env-file "$ENV_FILE" up -d --build
 
 for _ in $(seq 1 30); do
-  if body=$(curl -fs http://127.0.0.1:18081/health); then
+  if body=$(curl -fs --max-time 5 http://127.0.0.1:18081/health); then
     echo "✅ ashveil-server 기동 $body"; exit 0
   fi
   sleep 2

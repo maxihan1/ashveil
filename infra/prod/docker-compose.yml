@@ -14,7 +14,8 @@ services:
       - db-data:/var/lib/postgresql/data
     # 포트를 열지 않는다. 게임 서버만 compose 망으로 닿는다.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ashveil -d ashveil"]
+      # -h 127.0.0.1 — 첫 initdb 동안 소켓에만 뜨는 임시 서버를 준비됨으로 읽지 않게
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ashveil -d ashveil"]
       interval: 3s
       timeout: 3s
       retries: 20
