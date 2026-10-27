@@ -39,3 +39,6 @@
 - 2026-10-25 QA Hub 시험(GAME-F1-14) 버그 4건을 고쳤다. 강화 두 번 누르기는 강화 창이 응답 대기 중에는 이미 버튼을 막고 있어서, 실제로는 첫 응답 뒤 두 번째 요청이 들어간 것이다. 서버가 두 요청을 가를 단서는 시간뿐이라 캐릭터별 0.5초 가드(`Game:Enhance:RepeatGuardMilliseconds`, 직전 `enhance_histories` 시각 기준)를 넣었다. 요청 키(idempotency key) 방식은 두 번 누르면 키도 둘이라 이 경우를 못 막는다. 기획서에 없는 「오류 추정」 규칙이다.
 - 머리 위 이름표는 기획서 §9 를 따라 「이름 Lv.N」 으로 바꿨다(몬스터·플레이어도 같은 함수). HUD 대상 이름 칸은 기획서 규칙이 없어 「Lv.N 이름」 으로 남아 있다.
 - 디바이스 팜은 폰을 놓을 때 앱 데이터를 지우므로 QA Hub 자동 실행에서는 빌드 기본값(`GAME_SERVER_URL`)만 쓰인다.
+- 2026-10-27 QA 대상 게임 서버를 운영 서버 `/opt/ashveil` 로 옮긴다(OPS-F4-06b, D-41). 서버가 공개 저장소를 `/opt/ashveil/src` 에 clone 해 빌드하고, 비밀값은 checkout 밖 `/opt/ashveil/.env` 에 둔다(빌드 컨텍스트 · git 에 안 들어간다). 포트는 Auth_platform `infra/edge/README.md` 포트 표의 `18081`.
+- `deploy.sh` 는 `git pull` 을 하지 않는다 — 도는 중인 스크립트 파일이 pull 로 바뀌면 bash 가 바뀐 자리부터 읽는다. `.env` 없이 DB 볼륨만 있으면 멈춘다(새 비밀번호가 볼륨 안 role 과 어긋난다).
+- 맥 시험: 프로젝트 이름이 맥 개발 compose 와 같은 `ashveil` 이라 `COMPOSE_PROJECT_NAME=ashveil-prodtest` 로 돌렸다(같은 이름이면 맥의 `ashveil-db-1` 을 다시 만든다). health 200 · `environment` Qa · 어드민 키 없음 401 · 있음 200 · DB 포트 없음 · 덤프 TABLE DATA 13건 · 재실행 때 `.env` 그대로 · `.env` 지우면 ❌ 로 멈춤.

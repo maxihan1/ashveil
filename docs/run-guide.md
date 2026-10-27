@@ -26,6 +26,20 @@ curl http://localhost:8080/health   # {"status":"ok","environment":"Qa"}
 - 캐릭터 검색·골드/레벨/성향 변경·아이템 지급·초기화, 강화·드랍 확률, 결과 고정, 몬스터 스폰 편집, 테스트 계정 정리를 할 수 있다.
 - 같은 기능을 API 로 쓰려면 `X-Admin-Key` 헤더를 붙여 `/admin/*` 를 부른다(`docs/api.md` 어드민 절).
 
+### 운영 서버 `https://game.maxihan.com` (D-41)
+
+QA Hub · 폰이 쓰는 대상 서버다. 운영 서버 `101.79.19.193` 의 `/opt/ashveil` 에서 돌고, host Caddy 가 `127.0.0.1:18081` 로 넘긴다(사이트 블록 원본은 Auth_platform `infra/edge/Caddyfile`). DB 는 포트를 열지 않는다.
+
+```bash
+# 처음 한 번 (서버 root)
+git clone -q -b worktree-game-dev https://github.com/maxihan1/ashveil.git /opt/ashveil/src
+# 배포마다 — .env 가 없으면 처음 한 번 만든다(JWT_KEY · ADMIN_KEY · DB_PASSWORD, openssl rand)
+git -C /opt/ashveil/src pull --ff-only && /opt/ashveil/src/infra/prod/deploy.sh
+```
+
+- 비밀값은 `/opt/ashveil/.env`(600) 에만 있다. 백오피스 · QA Hub 대상 서버 줄의 어드민 키는 여기의 `ADMIN_KEY` 다.
+- DB 는 매일 03:15 백업된다(Auth_platform `infra/backup/ops-backup.sh` 의 `ashveil-postgres:ashveil`).
+
 ## 2. APK 받기
 
 1. GitHub 저장소 → Actions → `unity-ci` → 가장 최근 main 실행(또는 Run workflow 로 수동 실행).
@@ -52,7 +66,7 @@ adb push server-config.json /sdcard/Android/data/com.nimbusgames.ashveil.qa/file
 
 우선순위는 런타임 설정 파일 → 빌드 기본값 → `http://127.0.0.1:8080` 이다.
 
-디바이스 팜 · QA Hub 자동 실행은 빌드 기본값만 쓴다(팜이 폰을 놓을 때 앱 데이터와 함께 설정 파일을 지운다). 그래서 `GAME_SERVER_URL` 을 QA Hub 대상 서버 줄 주소와 같게 둔다(지금 `http://192.168.1.14:8080`). 맥 LAN 주소라 바뀌면 변수도 바꾸고 QA APK 를 다시 만든다.
+디바이스 팜 · QA Hub 자동 실행은 빌드 기본값만 쓴다(팜이 폰을 놓을 때 앱 데이터와 함께 설정 파일을 지운다). 그래서 `GAME_SERVER_URL` 을 QA Hub 대상 서버 줄 주소와 같게 둔다(지금 `https://game.maxihan.com`). 바뀌면 변수도 바꾸고 QA APK 를 다시 만든다.
 
 ## 4. 게임 조작 SDK (control_cli, QA 빌드)
 
