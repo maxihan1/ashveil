@@ -60,3 +60,9 @@
 - [x] 머리 위 이름표 「이름 Lv.N」 (ASH-UI-105, PlayMode 테스트는 CI)
 - [x] 저장소 Variable `GAME_SERVER_URL` = QA Hub 대상 서버 주소
 - [ ] 게임 서버 다시 띄우기 · 새 QA APK 로 QA Hub 케이스 다시 돌리기 (사용자)
+
+## 9단계 운영 서버 이전 (OPS-F4-06b, 2026-10-27 추가)
+- [x] `infra/prod/` — `127.0.0.1:18081` · `Qa` · DB 포트 안 엶 · 비밀값 서버에서 1회 생성 (맥에서 배포 스크립트 시험) (D-41)
+- [ ] 서버 `/opt/ashveil` clone · `deploy.sh` · host Caddy `game` 블록 · 백업 `DBS` 에 `ashveil-postgres:ashveil`
+- [ ] 저장소 Variable `GAME_SERVER_URL` = `https://game.maxihan.com` · QA APK 다시 빌드
+- [ ] 폰 브라우저 · 새 QA APK 로 `https://game.maxihan.com` 접속
