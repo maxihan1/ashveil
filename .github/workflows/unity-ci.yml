@@ -1,0 +1,238 @@
+# Unity 클라이언트 CI: C# 컴파일 검사(라이선스 불필요) → GameCI EditMode/PlayMode 테스트 → main 머지 시 QA·Release APK 빌드 → QA APK 를 QA Hub 에 올리기
+name: unity-ci
+
+on:
+  pull_request:
+    paths:
+      - "client/**"
+      - "shared/**"
+      - "tools/**"
+      - ".github/workflows/unity-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "shared/**"
+      - "tools/**"
+      - ".github/workflows/unity-ci.yml"
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "QA·Release APK 빌드까지 실행"
+        type: boolean
+        default: true
+      serverUrl:
+        description: "빌드에 넣을 기본 서버 주소 (예: http://192.168.0.10:8080). 비우면 저장소 변수 GAME_SERVER_URL"
+        required: false
+        default: ""
+
+# Personal 좌석은 취소된 잡에서 반납되지 않을 수 있어 진행 중인 실행을 취소하지 않는다(D-34).
+concurrency:
+  group: unity-ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UNITY_VERSION: 6000.0.84f1
+  UNITY_CHANGESET: 78ab6fc243d5
+  BOSSROOM_COMMIT: 1299ba4fc97d83b634e7d32a86c438ba668d7f9c
+  CONTROL_CLI_REF: 85f162ad0c05c16677d3168f081f3069d86fcf06
+
+jobs:
+  license:
+    name: Unity 라이선스 확인
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Unity 라이선스 Secret 없음::UNITY_EMAIL, UNITY_PASSWORD 를 등록하면 Unity 테스트와 APK 빌드가 실행됩니다 (docs/ci.md)."
+          fi
+
+  compile-check:
+    name: C# 컴파일 검사 + EditMode 테스트 (Unity 없이)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Unity 참조 DLL 캐시
+        id: refs
+        uses: actions/cache@v6
+        with:
+          path: .cache/unity-refs/${{ env.UNITY_VERSION }}
+          key: unity-refs-${{ env.UNITY_VERSION }}
+
+      - name: Unity 참조 DLL 추출
+        if: steps.refs.outputs.cache-hit != 'true'
+        env:
+          UNITY_REF_DIR: ${{ github.workspace }}/.cache/unity-refs/${{ env.UNITY_VERSION }}
+        run: bash tools/unity-compile-check/fetch-unity-refs.sh "$UNITY_VERSION" "$UNITY_CHANGESET"
+
+      - name: 컴파일 검사 (player-release, player-qa, editor-qa)
+        env:
+          UNITY_REF_DIR: ${{ github.workspace }}/.cache/unity-refs/${{ env.UNITY_VERSION }}
+        run: python3 tools/unity-compile-check/check.py
+
+      - name: EditMode 테스트 실행
+        env:
+          UNITY_REF_DIR: ${{ github.workspace }}/.cache/unity-refs/${{ env.UNITY_VERSION }}
+        run: python3 tools/unity-compile-check/check.py editmode-run
+
+  test:
+    name: GameCI 테스트 (EditMode + PlayMode)
+    needs: [license, compile-check]
+    if: needs.license.outputs.available == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: client/Library
+          key: Library-test-${{ hashFiles('client/Packages/manifest.json', 'client/ProjectSettings/**', 'shared/Package/**') }}
+          restore-keys: Library-test-
+
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # coverageEnabled: false 입력은 game-ci CLI v0.1.72 가 모르는 --no-coverageEnabled 로 넘어가 실패하므로 환경 변수로 끈다.
+          GAME_CI_COVERAGE_ENABLED: "false"
+        with:
+          projectPath: client
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: all
+          artifactsPath: test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity 테스트 결과
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: unity-test-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  build:
+    name: Android APK (${{ matrix.variant }})
+    needs: [license, test]
+    if: >-
+      needs.license.outputs.available == 'true' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # Personal 좌석 하나로 차례로 빌드
+      matrix:
+        variant: [qa, release]
+    steps:
+      - name: 러너 디스크 확보 (Unity Android 이미지 7GB+)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          large-packages: false
+
+      - uses: actions/checkout@v7
+
+      - name: Boss Room 원본 캐시
+        uses: actions/cache@v6
+        with:
+          path: .cache/bossroom
+          key: bossroom-${{ env.BOSSROOM_COMMIT }}
+
+      - name: Boss Room 아트 가져오기
+        env:
+          BOSSROOM_CACHE: ${{ github.workspace }}/.cache/bossroom
+        run: bash tools/fetch-bossroom.sh
+
+      # 게임 조작 SDK 는 저장소에 넣지 않고 QA 빌드에서만 더한다(D-39). 커밋을 고정해 빌드가 재현된다.
+      # npx 로 git 패키지를 받으면 npm 이 「GitFetcher requires an Arborist constructor」로 멈춰서 받아서 빌드한다.
+      - name: QA 빌드 전용 control_cli SDK 추가
+        if: matrix.variant == 'qa'
+        run: |
+          git clone -q https://github.com/maxihan1/control_cli.git "$RUNNER_TEMP/control_cli"
+          git -C "$RUNNER_TEMP/control_cli" checkout -q "$CONTROL_CLI_REF"
+          npm --prefix "$RUNNER_TEMP/control_cli" ci --no-audit --no-fund
+          node "$RUNNER_TEMP/control_cli/dist/main.js" instrument client --ref "$CONTROL_CLI_REF"
+
+      - uses: actions/cache@v6
+        with:
+          path: client/Library
+          key: Library-android-${{ matrix.variant }}-${{ hashFiles('client/Packages/manifest.json', 'client/ProjectSettings/**') }}
+          restore-keys: Library-android-${{ matrix.variant }}-
+
+      - uses: game-ci/unity-builder@v6
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: client
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: Android
+          androidExportType: androidPackage
+          buildName: Ashveil-${{ matrix.variant }}
+          buildMethod: Ashveil.Editor.CiBuild.BuildAndroid
+          versioning: None
+          allowDirtyBuild: true
+          # QA 는 ANDROID_QA_* (빌드마다 같은 키라 덮어 설치가 된다), Release 는 ANDROID_KEYSTORE_*. 없으면 디버그 서명.
+          androidKeystoreName: ${{ (matrix.variant == 'qa' && secrets.ANDROID_QA_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64) != '' && 'ashveil.keystore' || '' }}
+          androidKeystoreBase64: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYSTORE_PASS || secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYALIAS_NAME || secrets.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasPass: ${{ matrix.variant == 'qa' && secrets.ANDROID_QA_KEYALIAS_PASS || secrets.ANDROID_KEYALIAS_PASS }}
+          customParameters: >-
+            -buildVariant ${{ matrix.variant }}
+            -buildNumber ${{ github.run_number }}
+            -serverUrl ${{ inputs.serverUrl || vars.GAME_SERVER_URL || 'none' }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Ashveil-${{ matrix.variant }}-apk
+          path: build/Android
+          retention-days: 30
+
+      # QA APK 를 QA Hub 에 올리면 QA Hub 가 스모크 → 회귀를 돌린다(D-40). 빌드 번호는 versionCode 와 같은 run_number 라
+      # QA Hub 가 폰에 깔린 빌드와 견줄 수 있다. 같은 번호는 다시 실행이라 QA Hub 가 409 로 처음 것을 지킨다.
+      - name: QA Hub 에 빌드 올리기
+        if: matrix.variant == 'qa'
+        timeout-minutes: 10
+        env:
+          QAHUB_TOKEN: ${{ secrets.QAHUB_TOKEN }}
+          QAHUB_URL: ${{ secrets.QAHUB_URL }}
+          QAHUB_ENV: ${{ vars.QAHUB_ENV }}
+          BUILD_NO: ${{ github.run_number }}
+        run: |
+          if [ -z "$QAHUB_TOKEN" ] || [ -z "$QAHUB_URL" ] || [ -z "$QAHUB_ENV" ]; then
+            echo "::warning title=QA Hub 설정 없음::Secret QAHUB_TOKEN, QAHUB_URL 과 Variable QAHUB_ENV 를 등록하면 QA APK 를 QA Hub 에 올려 스모크 테스트가 돈다 (docs/ci.md)."
+            exit 0
+          fi
+          # curl 오류 줄은 호스트 이름을 찍는데 Secret 가림은 값 전체에만 걸려서 -S 를 빼고 종료 코드만 남긴다.
+          code=$(curl -s -o "$RUNNER_TEMP/qahub.json" -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $QAHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @build/Android/Ashveil-qa.apk \
+            --url-query "env=$QAHUB_ENV" --url-query "buildNo=$BUILD_NO" \
+            "${QAHUB_URL%/}/api/builds") || {
+            echo "::error title=QA Hub 연결 실패::curl 종료 코드 $? (6 주소 못 찾음 · 7 연결 거부 · 28 시간 초과)"
+            exit 1
+          }
+          cat "$RUNNER_TEMP/qahub.json"; echo
+          case "$code" in
+            201) ;;
+            409) echo "::notice title=QA Hub::빌드 $BUILD_NO 은 이미 올라가 있다(다시 실행). 처음 올린 APK 로 돈다." ;;
+            *) echo "::error title=QA Hub 올리기 실패::HTTP $code"; exit 1 ;;
+          esac

@@ -1,0 +1,69 @@
+# 작업 체크리스트
+
+진행 상황을 단계별로 체크한다. 세부 결정은 `context-notes.md`, 설계 근거는 `docs/decisions.md`.
+`[x]` 는 코드·테스트로 확인한 것, `[~]` 는 코드는 있으나 Unity 라이선스가 없어 CI 실기 빌드·폰 확인이 남은 것이다.
+
+## 0단계 설계
+- [x] 아키텍처·도메인 모델·ERD·씬 생성 전략 (`docs/architecture.md`)
+- [x] 규칙·확률표 (`docs/game-rules.md`)
+- [x] API 명세 확정안 (`docs/api.md`, use-item 추가)
+- [x] 결정 기록 (`docs/decisions.md` D-01 ~ D-32)
+- [x] CI 설계·Secrets 안내 (`docs/ci.md`)
+
+## 1단계 기반
+- [x] shared 도메인 + xUnit 테스트 66개
+- [x] 서버 골격, Docker Compose, 인증 API + 통합 테스트 (Compose 기동·로그인 실측)
+- [x] Unity 프로젝트 골격(manifest, ProjectVersion, asmdef 5개 + 테스트 2개)
+- [x] Boss Room fetch 스크립트(실측 200MB), 생성기(Boot/World 씬, 프리팹, URP), 빌드 스크립트
+- [x] 로그인 화면 + 서버 로그인 (PlayMode 테스트, 가짜 서버)
+- [x] GameCI 파이프라인 (test, QA/Release APK) 정의
+- [x] 로컬 Unity 컴파일 체크 하네스 + EditMode 테스트 실행 하네스 (CI compile-check 잡)
+- [~] 폰에서 APK 실행 → 로그인 (Unity 라이선스 Secrets 등록 후)
+
+## 2단계 월드·플레이어
+- [x] 필드 맵(구역 4개) 생성기, 플레이어 이동·카메라, 미니맵, 구역 토스트, 귀환 버튼
+- [x] 캐릭터 생성·선택, 위치 저장·복원 (서버 통합 테스트)
+- [~] 폰에서 마을 → 사냥터 이동, 재접속 위치 유지
+
+## 3단계 전투·재화
+- [x] 몬스터 AI(EditMode)·스폰·리젠, 전투, 사망·부활, 처치 골드·경험치, 원장(서버 테스트), 자동사냥
+- [~] 폰에서 사냥 → 골드 증가 = 서버 원장
+
+## 4단계 인벤토리·상점·강화
+- [x] 도메인 테스트 → 서버 API(동시 구매 포함) → 클라이언트 UI(가방·상점·강화·상세)
+- [~] 폰에서 구매·장착·강화(성공·실패·파괴)·판매
+
+## 5단계 봇
+- [x] 봇 시드·API, 봇 AI(3성향, EditMode), 봇 처치 확률 드랍(서버 테스트)
+- [~] 폰에서 봇 배회·처치·전리품
+
+## 5-1단계 PK
+- [x] PK 모드, 성향치(선량·보라·악명), 사망 드랍, 바닥 아이템·줍기(봇 포함), 경비병, PK 기록 (서버 시나리오 테스트)
+- [~] 폰에서 빨간 이름·경비병·드랍·봇 줍기·되찾기
+
+## 6단계 QA 마감
+- [x] AltTester SDK 통합(QA 잡만 패키지 추가), GM 콘솔, 빌드 인자
+- [x] 실행 가이드, 단계별 폰 체크리스트, JUnit5 샘플(실제 클라이언트 2.3.2로 컴파일)
+- [~] AltTester Desktop 에서 QA APK 연결·오브젝트 트리 조회
+
+## 7단계 테스트 지원 (2026-10-21 추가)
+- [x] 몬스터 스폰 표 서버 이전(`/world/spawns`, 처치 검증 DB 기준) (D-38)
+- [x] QA 어드민 API: 조회·조작·초기화·결과 고정·정리·확률·스폰 (통합 테스트 10개) (D-36, D-37)
+- [x] 백오피스 웹 `/backoffice` (브라우저에서 검색·상세·탭 동작 확인)
+- [x] 전투 HUD 개편(하단 퀵슬롯), 자동사냥·공격 대상·이동 속도·카메라 조정
+- [x] 폰에서 새 APK 로 스폰 반영 확인 (어드민 API 로 보스 스폰 추가 → 재입장 시 등장)
+
+## 8단계 QA Hub 시험 버그 (GAME-F1-14, 2026-10-25 추가)
+- [x] 봇 성향 비율 40·40·20% (ASH-FN-292, 서버 테스트)
+- [x] 모델 바인딩 실패 400 VALIDATION_FAILED 본문 (ASH-FN-348, 서버 테스트)
+- [x] 「강화하기」 두 번 누르기 0.5초 서버 가드 + 강화 창 잠금 (ASH-FN-662, 서버 테스트)
+- [x] 머리 위 이름표 「이름 Lv.N」 (ASH-UI-105, PlayMode 테스트는 CI)
+- [x] 저장소 Variable `GAME_SERVER_URL` = QA Hub 대상 서버 주소
+- [ ] 게임 서버 다시 띄우기 · 새 QA APK 로 QA Hub 케이스 다시 돌리기 (사용자)
+
+## 9단계 운영 서버 이전 (OPS-F4-06b, 2026-10-27 추가)
+- [x] `infra/prod/` — `127.0.0.1:18081` · `Qa` · DB 포트 안 엶 · 비밀값 서버에서 1회 생성 (맥에서 배포 스크립트 시험) (D-41)
+- [x] 서버 `/opt/ashveil` clone · `deploy.sh` · host Caddy `game` 블록 · 백업 `DBS` 에 `ashveil-postgres:ashveil` + `FILES` 에 `/opt/ashveil/.env` (Auth_platform PR #23)
+- [x] 저장소 Variable `GAME_SERVER_URL` = `https://game.maxihan.com` · QA APK 다시 빌드 (빌드 47, run 40442106970)
+- [x] 폰 브라우저로 `https://game.maxihan.com/health` (사용자 확인) · 맥에서 가입 · 로그인
+- [ ] 새 QA APK(빌드 47) 폰 설치 · 로그인 (사용자, 선택)
