@@ -73,3 +73,9 @@
 - [x] GM 콘솔 순간이동 줄에 「봇 부르기」(`GmSummonBots`) — 지금 구역의 살아 있는 봇을 내 둘레로 (D-42)
 - [x] PR #8 → `worktree-game-dev` 병합 → QA APK 빌드 52(run 41752101088, `0.1.52`) → `~/Apps/ashveil/build52/Ashveil-qa.apk`
 - [ ] 폰 설치 · Test Commander 대상 앱 경로 바꾸기 (다른 세션, Ashveil 정식 실행 끝난 뒤)
+
+## 11단계 정리 교착 (ASH-FN-196, 2026-11-04 추가)
+- [x] 원인: `/admin/cleanup` 이 아이템 → 캐릭터(계정 cascade) 차례로 잠가, 캐릭터 → 아이템 차례인 게임 요청과 교착 (재현 실험 · Postgres 교착 로그)
+- [x] 정리가 캐릭터 행부터 id 차례로 `FOR UPDATE` 잠금 (통합 테스트 `Cleanup_ConcurrentWithGameRequestOnSameCharacter_WaitsInsteadOfDeadlocking`, 고치기 전 500 · 고친 뒤 통과) (D-43)
+- [x] `EnableRetryOnFailure` 는 켜지 않는다 (D-43)
+- [ ] 운영 서버 배포 (사용자, Test Commander 정식 실행 끝난 뒤 — `~/.claude/plans/ashveil-cleanup-deadlock.md`)
