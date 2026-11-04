@@ -57,3 +57,7 @@
 - 로컬 Unity 참조 DLL 캐시(`tools/unity-compile-check/.cache`)가 game-dev 작업 폴더에도 비어 있었다(0B). `.cache` 는 gitignore 에 없어서 저장소 밖에 받았다.
 - PR #8 병합(`e316cc4`) 뒤 `worktree-game-dev` 에서 unity-ci 를 수동 실행했다 — 빌드 52(run 41752101088). QA APK `com.nimbusgames.ashveil.qa` `0.1.52`(versionCode 52), `global-metadata.dat` 에 `GmSummonBots` 가 든다. QA Hub Secret 이 없어 QA Hub 올리기는 건너뛴다. 폰 설치 · Test Commander 대상 앱 경로 바꾸기는 Ashveil 정식 실행이 끝난 뒤 다른 세션이 한다.
 - GM 출력 글의 구역 이름은 `ZoneMap.DisplayName` 이라 마을이면 「하늘빛 마을에 살아 있는 봇이 없습니다.」, 초급이면 「초록 들판 봇 N명을 불렀습니다.」 꼴이다.
+- Test Commander 강화 확률 케이스 11개(ASH-FN-175 · 184 · 187 · 190 · 193 · 196 · 199 · 202 · 205 · 208 · 547)가 강화 1,000번을 플레이어 토큰으로 연달아 보내다 서버 0.5초 `COOLDOWN` 에 막혀 실패했다(실행 20985). 처음엔 「강화 창이 표시를 실어 보내고 서버가 그 요청만 막는」 쪽으로 시작했는데, 사용자가 규칙부터 정했다(「결과 뜨는 동안 버튼 잠금」). 서버는 강화를 시간으로 막지 않고 강화 창만 막는다(D-43).
+- 강화 창은 이미 응답 대기 중과 결과 뒤 500ms 를 잠그고 있어서 동작은 그대로다. 잠금만 Domain `EnhanceButtonLock` 으로 옮겼다. EditMode 테스트 어셈블리는 Presentation 을 참조하지 않아 패널을 직접 시험할 수 없기 때문이다. 잠금 시간도 shared `EnhanceConfig.RepeatGuardMilliseconds`(서버 설정 겸용)에서 클라이언트 상수로 옮겼다.
+- 서버 테스트 픽스처의 「강화 막기 0」 덮어쓰기와 `EnhanceGuardServerFixture` 는 쓸 곳이 없어 지웠다. 이제 서버 테스트 전부가 운영과 같은 설정으로 강화를 연달아 부른다.
+- 빌드 52 APK 에도 같은 잠금(결과 뒤 500ms)이 들어 있다. 그래서 서버만 먼저 배포해도 ASH-FN-662 결과는 같다. 운영 서버에 환경 변수 `Game__Enhance__RepeatGuardMilliseconds` 가 남아 있어도 이제는 읽히지 않는다.
