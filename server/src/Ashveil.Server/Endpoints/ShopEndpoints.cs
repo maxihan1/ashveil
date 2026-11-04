@@ -12,7 +12,7 @@ public static class ShopEndpoints
 {
     public static void MapShopEndpoints(this IEndpointRouteBuilder app)
     {
-        var shop = app.MapGroup("/shop").WithTags("Shop").RequireAuthorization();
+        var shop = app.MapGroup("/shop").WithTags("Shop").RequireAuthorization().ProducesErrors(400, 401, 403, 404);
 
         shop.MapGet("/items", async (HttpContext http, GameDbContext db, RuntimeGameConfig config, TimeProvider clock) =>
         {
@@ -51,7 +51,7 @@ public static class ShopEndpoints
                 db.AddNewItems(OwnerKind.Character, character.Id, items, plan, template.Id, 0, now);
             });
             return await db.InventoryDtoAsync(character);
-        });
+        }).ProducesErrors(409);
 
         shop.MapPost("/sell", async (SellRequest req, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
@@ -75,7 +75,7 @@ public static class ShopEndpoints
                 db.ChangeGold(character, gain, LedgerReasons.ShopSell, "Item", item.Id.ToString(), now);
             });
             return await db.InventoryDtoAsync(character);
-        });
+        }).ProducesErrors(409);
 
         app.MapPost("/enhance", async (EnhanceRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config,
             IRandomSource random, TimeProvider clock, ForcedOutcomes forced) =>
@@ -127,7 +127,7 @@ public static class ShopEndpoints
             response.Item = response.Result == EnhanceResult.Destroy ? null : Map.Item(target);
             response.Inventory = await db.InventoryDtoAsync(character);
             return response;
-        }).WithTags("Enhance").RequireAuthorization();
+        }).WithTags("Enhance").RequireAuthorization().ProducesErrors(400, 401, 403, 404, 409);
 
         app.MapGet("/currency/ledger", async (HttpContext http, GameDbContext db, int? limit) =>
         {
@@ -137,6 +137,6 @@ public static class ShopEndpoints
                 .Where(e => e.CharacterId == character.Id)
                 .OrderByDescending(e => e.Id).Take(take).ToListAsync();
             return entries.Select(Map.Ledger).ToList();
-        }).WithTags("Currency").RequireAuthorization();
+        }).WithTags("Currency").RequireAuthorization().ProducesErrors(400, 401, 403, 404);
     }
 }

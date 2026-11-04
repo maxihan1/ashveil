@@ -36,8 +36,8 @@ public static class AuthEndpoints
             {
                 throw GameErrors.Conflict(ErrorCodes.UsernameTaken);
             }
-            return Results.Created($"/accounts/{account.Id}", new SignupResponse { AccountId = account.Id });
-        });
+            return TypedResults.Created($"/accounts/{account.Id}", new SignupResponse { AccountId = account.Id });
+        }).ProducesErrors(400, 409);
 
         group.MapPost("/login", async (LoginRequest req, GameDbContext db, TokenService tokens, JwtOptions jwt, TimeProvider clock) =>
         {
@@ -45,7 +45,7 @@ public static class AuthEndpoints
             if (account == null || req.Password == null || !PasswordHasher.Verify(req.Password, account.PasswordHash))
                 throw GameErrors.Unauthorized(ErrorCodes.InvalidCredentials);
             return await IssueAsync(db, tokens, jwt, account, clock.GetUtcNow().UtcDateTime);
-        });
+        }).ProducesErrors(400, 401);
 
         group.MapPost("/refresh", async (RefreshRequest req, GameDbContext db, TokenService tokens, JwtOptions jwt, TimeProvider clock) =>
         {
@@ -70,7 +70,7 @@ public static class AuthEndpoints
 
             var account = await db.Accounts.SingleAsync(a => a.Id == stored.AccountId);
             return await IssueAsync(db, tokens, jwt, account, now);
-        });
+        }).ProducesErrors(400, 401);
     }
 
     private static async Task<TokenResponse> IssueAsync(GameDbContext db, TokenService tokens, JwtOptions jwt, Account account, DateTime now)

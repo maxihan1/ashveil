@@ -20,7 +20,7 @@ public static class GmEndpoints
             return;
         }
 
-        var gm = app.MapGroup("/gm").WithTags("GM (QA only)").RequireAuthorization();
+        var gm = app.MapGroup("/gm").WithTags("GM (QA only)").RequireAuthorization().ProducesErrors(401);
 
         gm.MapPost("/gold", async (GmGoldRequest req, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
@@ -32,7 +32,7 @@ public static class GmEndpoints
                 db.ChangeGold(character, req.Amount, LedgerReasons.GmGrant, "Gm", "gold", now);
             });
             return await db.CharacterDtoAsync(character, now);
-        });
+        }).ProducesErrors(400, 403, 404, 409);
 
         gm.MapPost("/item", async (GmItemRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config, TimeProvider clock) =>
         {
@@ -45,7 +45,7 @@ public static class GmEndpoints
                 await GiveItemAsync(db, character, template, req, now);
             });
             return await db.InventoryDtoAsync(character);
-        });
+        }).ProducesErrors(400, 403, 404, 409);
 
         gm.MapPost("/level", async (GmLevelRequest req, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
@@ -59,16 +59,16 @@ public static class GmEndpoints
                 character.Exp = 0;
             });
             return await db.CharacterDtoAsync(character, now);
-        });
+        }).ProducesErrors(400, 403, 404);
 
-        gm.MapPost("/enhance-rate", (GmEnhanceRateRequest req, RuntimeGameConfig config) => ApplyEnhanceRates(req, config));
+        gm.MapPost("/enhance-rate", (GmEnhanceRateRequest req, RuntimeGameConfig config) => ApplyEnhanceRates(req, config)).ProducesErrors(400);
 
         gm.MapPost("/bot/reset", async (GmBotResetRequest req, GameDbContext db, BotService bots) =>
         {
             var count = 0;
             await db.InTransactionAsync(async () => count = await bots.ResetAsync(req.Zone));
             return new GmBotResetResponse { BotCount = count };
-        });
+        }).ProducesErrors(400);
 
         gm.MapPost("/alignment", async (GmAlignmentRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config, TimeProvider clock) =>
         {
@@ -83,9 +83,9 @@ public static class GmEndpoints
                 if (req.ClearPurple) character.PurpleUntil = null;
             });
             return await db.CharacterDtoAsync(character, now);
-        });
+        }).ProducesErrors(400, 403, 404);
 
-        gm.MapPost("/drop-rate", (GmDropRateRequest req, RuntimeGameConfig config) => ApplyDropRates(req, config));
+        gm.MapPost("/drop-rate", (GmDropRateRequest req, RuntimeGameConfig config) => ApplyDropRates(req, config)).ProducesErrors(400);
 
         gm.MapGet("/config", (RuntimeGameConfig config) => new GmConfigResponse { Enhance = config.Enhance, Drop = config.Drop });
     }

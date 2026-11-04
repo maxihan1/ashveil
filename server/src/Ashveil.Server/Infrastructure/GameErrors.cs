@@ -55,6 +55,10 @@ public static class GameErrors
     public static IResult ToResult(string code, int status, string? message = null) =>
         Results.Json(new ErrorResponse { Code = code, Message = message ?? DefaultMessage(code) }, statusCode: status);
 
+    /// <summary>OpenAPI 문서에 이 엔드포인트(또는 그룹 전체)가 돌려줄 수 있는 오류 상태 코드를 { code, message } 본문으로 싣는다.</summary>
+    public static TBuilder ProducesErrors<TBuilder>(this TBuilder builder, params int[] statuses) where TBuilder : IEndpointConventionBuilder =>
+        builder.WithMetadata(statuses.Select(s => (object)new ProducesResponseTypeMetadata(s, typeof(ErrorResponse), ["application/json"])).ToArray());
+
     /// <summary>모든 예외를 ErrorResponse 로 바꾼다. 알 수 없는 예외는 500 INTERNAL_ERROR.</summary>
     public static void UseGameErrorHandler(this WebApplication app)
     {

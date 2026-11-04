@@ -68,7 +68,7 @@ builder.Services.AddOpenApi(o => o.AddDocumentTransformer((doc, _, _) =>
     doc.Info.Title = "Ashveil Game API";
     doc.Info.Description = "게임 API에는 Authorization: Bearer <token>, 캐릭터 대상 API에는 X-Character-Id 헤더가 필요합니다.";
     return Task.CompletedTask;
-}));
+}).AddDocumentTransformer(OpenApiSchemaFixes.Apply));
 
 var app = builder.Build();
 
@@ -86,7 +86,7 @@ if (!app.Environment.IsProduction())
     });
 }
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", environment = app.Environment.EnvironmentName })).WithTags("Health");
+app.MapGet("/health", () => TypedResults.Ok(new { status = "ok", environment = app.Environment.EnvironmentName })).WithTags("Health");
 app.MapAuthEndpoints();
 app.MapCharacterEndpoints();
 app.MapShopEndpoints();

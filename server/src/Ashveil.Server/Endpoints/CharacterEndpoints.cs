@@ -13,7 +13,7 @@ public static class CharacterEndpoints
 {
     public static void MapCharacterEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/characters").WithTags("Characters").RequireAuthorization();
+        var group = app.MapGroup("/characters").WithTags("Characters").RequireAuthorization().ProducesErrors(401);
 
         group.MapGet("/", async (HttpContext http, GameDbContext db) =>
         {
@@ -68,8 +68,8 @@ public static class CharacterEndpoints
                 throw GameErrors.Conflict(ErrorCodes.NameTaken);
             }
 
-            return Results.Created($"/characters/{character.Id}", await db.CharacterDtoAsync(character, now));
-        });
+            return TypedResults.Created($"/characters/{character.Id}", await db.CharacterDtoAsync(character, now));
+        }).ProducesErrors(400, 409);
 
         group.MapDelete("/{id:long}", async (long id, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
@@ -80,14 +80,14 @@ public static class CharacterEndpoints
                 character.DeletedAt = clock.GetUtcNow().UtcDateTime;
                 await db.Items.Where(i => i.OwnerKind == OwnerKind.Character && i.OwnerId == id).ExecuteDeleteAsync();
             });
-            return Results.NoContent();
-        });
+            return TypedResults.NoContent();
+        }).ProducesErrors(403, 404);
 
         group.MapGet("/{id:long}", async (long id, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
             var character = await db.GetOwnedCharacterAsync(id, http.AccountId());
             return await db.CharacterDtoAsync(character, clock.GetUtcNow().UtcDateTime);
-        });
+        }).ProducesErrors(403, 404);
 
         group.MapPut("/{id:long}/position", async (long id, PositionRequest req, HttpContext http, GameDbContext db) =>
         {
@@ -101,20 +101,20 @@ public static class CharacterEndpoints
                 character.PosY = req.Y;
                 character.PosZ = req.Z;
             });
-            return Results.NoContent();
-        });
+            return TypedResults.NoContent();
+        }).ProducesErrors(400, 403, 404);
 
         group.MapGet("/{id:long}/inventory", async (long id, HttpContext http, GameDbContext db) =>
         {
             var character = await db.GetOwnedCharacterAsync(id, http.AccountId());
             return await db.InventoryDtoAsync(character);
-        });
+        }).ProducesErrors(403, 404);
 
         group.MapPost("/{id:long}/equip", (long id, EquipRequest req, HttpContext http, GameDbContext db) =>
-            ChangeEquipAsync(db, id, http.AccountId(), req.ItemId, equip: true));
+            ChangeEquipAsync(db, id, http.AccountId(), req.ItemId, equip: true)).ProducesErrors(400, 403, 404, 409);
 
         group.MapPost("/{id:long}/unequip", (long id, EquipRequest req, HttpContext http, GameDbContext db) =>
-            ChangeEquipAsync(db, id, http.AccountId(), req.ItemId, equip: false));
+            ChangeEquipAsync(db, id, http.AccountId(), req.ItemId, equip: false)).ProducesErrors(400, 403, 404, 409);
 
         // 소모품(물약) 사용. HP·MP 는 클라이언트 런타임 상태이므로 회복량만 돌려준다.
         group.MapPost("/{id:long}/use-item", async (long id, UseItemRequest req, HttpContext http, GameDbContext db) =>
@@ -137,7 +137,7 @@ public static class CharacterEndpoints
                 TemplateId = template.Id, HealHp = template.HealHp, HealMp = template.HealMp,
                 Inventory = await db.InventoryDtoAsync(character),
             };
-        });
+        }).ProducesErrors(400, 403, 404, 409);
 
         group.MapGet("/{id:long}/pk-history", async (long id, HttpContext http, GameDbContext db, TimeProvider clock) =>
         {
@@ -164,7 +164,7 @@ public static class CharacterEndpoints
                     Delta = h.Delta, After = h.After, Reason = h.Reason, CreatedAt = h.CreatedAt,
                 }).ToList(),
             };
-        });
+        }).ProducesErrors(403, 404);
     }
 
     private static async Task<EquipResponse> ChangeEquipAsync(GameDbContext db, long characterId, long accountId, long itemId, bool equip)
