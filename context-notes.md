@@ -55,3 +55,5 @@
 - 버튼은 새 줄이 아니라 순간이동 줄(`GmTeleportSection`) 맨 왼쪽(slot 4)에 둔다. control_cli `click` 은 버튼 가운데를 가짜 터치로 누르는데, GM 목록은 보이는 높이가 736 이라 여섯째 줄(봇 리셋)의 버튼부터 스크롤해야 보인다. 새 줄을 위쪽에 넣으면 다섯째 줄(강화 확률)이 밀려 가려진다. 순간이동 줄 너비는 버튼 5개(16+5×262=1326)가 줄 폭(1436) 안에 든다.
 - 버튼 이름은 사용자가 준 `GmSummonBots` 그대로(`Button` 꼬리 없음). 트리 주소 `/WorldRoot/HudCanvas/PanelLayer/GmConsole/Window/Body/GmList/Content/GmTeleportSection/GmSummonBots` — control_cli `Tree.PathOf` 가 장면 맨 위 오브젝트부터 센다.
 - 로컬 Unity 참조 DLL 캐시(`tools/unity-compile-check/.cache`)가 game-dev 작업 폴더에도 비어 있었다(0B). `.cache` 는 gitignore 에 없어서 저장소 밖에 받았다.
+- PR #8 병합(`e316cc4`) 뒤 `worktree-game-dev` 에서 unity-ci 를 수동 실행했다 — 빌드 52(run 41752101088). QA APK `com.nimbusgames.ashveil.qa` `0.1.52`(versionCode 52), `global-metadata.dat` 에 `GmSummonBots` 가 든다. QA Hub Secret 이 없어 QA Hub 올리기는 건너뛴다. 폰 설치 · Test Commander 대상 앱 경로 바꾸기는 Ashveil 정식 실행이 끝난 뒤 다른 세션이 한다.
+- GM 출력 글의 구역 이름은 `ZoneMap.DisplayName` 이라 마을이면 「하늘빛 마을에 살아 있는 봇이 없습니다.」, 초급이면 「초록 들판 봇 N명을 불렀습니다.」 꼴이다.

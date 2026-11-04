@@ -71,5 +71,5 @@
 ## 10단계 GM 봇 부르기 (ASH-UI-105 결정화, 2026-11-04 추가)
 - [x] `BotBrain.SummonPoint` — 둘레 반지름 3~6 고르게 (EditMode 테스트)
 - [x] GM 콘솔 순간이동 줄에 「봇 부르기」(`GmSummonBots`) — 지금 구역의 살아 있는 봇을 내 둘레로 (D-42)
-- [ ] PR → `worktree-game-dev` 병합 → QA APK 빌드 → `~/Apps/ashveil/build<번호>/Ashveil-qa.apk`
+- [x] PR #8 → `worktree-game-dev` 병합 → QA APK 빌드 52(run 41752101088, `0.1.52`) → `~/Apps/ashveil/build52/Ashveil-qa.apk`
 - [ ] 폰 설치 · Test Commander 대상 앱 경로 바꾸기 (다른 세션, Ashveil 정식 실행 끝난 뒤)
