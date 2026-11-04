@@ -1,0 +1,16 @@
+{
+    "name": "Ashveil.Domain",
+    "rootNamespace": "Ashveil.Domain",
+    "references": [
+        "Ashveil.Shared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

@@ -1,0 +1,22 @@
+{
+    "name": "Ashveil.Editor",
+    "rootNamespace": "Ashveil.Editor",
+    "references": [
+        "Ashveil.Shared",
+        "Ashveil.Domain",
+        "Ashveil.Application",
+        "Ashveil.Presentation",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

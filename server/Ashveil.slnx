@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/shared/">
+    <Project Path="../shared/Ashveil.Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Ashveil.Server/Ashveil.Server.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ashveil.Shared.Tests/Ashveil.Shared.Tests.csproj" />
+    <Project Path="tests/Ashveil.Server.Tests/Ashveil.Server.Tests.csproj" />
+  </Folder>
+</Solution>

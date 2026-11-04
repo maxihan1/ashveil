@@ -1,0 +1,19 @@
+{
+    "name": "Ashveil.Application",
+    "rootNamespace": "Ashveil.Application",
+    "references": [
+        "Ashveil.Shared",
+        "Ashveil.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,7 @@
+{
+  "name": "com.nimbusgames.ashveil.shared",
+  "version": "0.1.0",
+  "displayName": "Ashveil Shared",
+  "description": "Pure C# domain rules and DTOs shared by the Ashveil client and server.",
+  "unity": "6000.0"
+}

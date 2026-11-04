@@ -1,0 +1,42 @@
+# 로컬 LAN용 백엔드 실행 구성 (PostgreSQL + 게임 서버). 폰은 http://<Mac LAN IP>:8080 으로 접속한다.
+name: ashveil
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ashveil
+      POSTGRES_USER: ashveil
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ashveil}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # QA 도구가 원장 등을 직접 조회할 수 있게 열어 두되, 같은 Mac 에서만 접속 가능하다.
+      - "127.0.0.1:${DB_PORT:-15432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ashveil -d ashveil"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    environment:
+      # Qa 이면 GM API 와 Swagger 가 켜진다. 운영과 같은 동작을 보려면 Production.
+      ASPNETCORE_ENVIRONMENT: ${SERVER_ENVIRONMENT:-Qa}
+      ConnectionStrings__Game: "Host=db;Port=5432;Database=ashveil;Username=ashveil;Password=${DB_PASSWORD:-ashveil}"
+      Jwt__Key: ${JWT_KEY:-local-qa-signing-key-change-me-0123456789}
+      Admin__Key: ${ADMIN_KEY:-local-qa-admin-key-change-me}
+    ports:
+      # 0.0.0.0 으로 열어 같은 Wi-Fi 의 폰(Device Farm)에서 접속할 수 있게 한다.
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:

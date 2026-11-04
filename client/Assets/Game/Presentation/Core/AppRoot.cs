@@ -1,0 +1,84 @@
+// 앱 전역 루트: 서비스 초기화, 프레임 설정, 세션 만료 처리, 씬 이름 상수, 비동기 UI 실행 헬퍼
+using System;
+using System.Threading.Tasks;
+using Ashveil.Application;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace Ashveil.Presentation
+{
+    public static class SceneNames
+    {
+        public const string Boot = "Boot";
+        public const string World = "World";
+    }
+
+    public sealed class AppRoot : MonoBehaviour
+    {
+        private static AppRoot _instance;
+
+        public static void EnsureExists()
+        {
+            if (_instance != null) return;
+            new GameObject("AppRoot").AddComponent<AppRoot>();
+        }
+
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+            // 숫자 표기(1,234)와 파싱이 기기 언어 설정에 따라 달라지지 않게 고정한다(QA 자동화가 텍스트를 비교한다).
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            UnityEngine.Application.targetFrameRate = 30;
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            if (!GameContext.IsInitialized)
+                GameContext.Initialize(ServerSettings.LoadForPlayer(), new UnityWebRequestTransport());
+            GameContext.Client.SessionExpired += OnSessionExpired;
+        }
+
+        private void OnDestroy()
+        {
+            if (_instance != this) return;
+            if (GameContext.Client != null) GameContext.Client.SessionExpired -= OnSessionExpired;
+            _instance = null;
+        }
+
+        private static void OnSessionExpired()
+        {
+            GameContext.Session.Clear();
+            Toast.Show("로그인 정보가 만료되었습니다. 다시 로그인해 주세요.");
+            if (SceneManager.GetActiveScene().name != SceneNames.Boot) SceneManager.LoadScene(SceneNames.Boot);
+        }
+    }
+
+    public static class AsyncUi
+    {
+        /// <summary>UI 이벤트에서 비동기 작업을 실행하고, 실패하면 서버 안내 문구를 토스트로 띄운다.</summary>
+        public static async void Run(Func<Task> action, Action<ApiException> onError = null)
+        {
+            try
+            {
+                await action();
+            }
+            catch (ApiException e)
+            {
+                if (onError != null) onError(e);
+                else Toast.Show(e.Message);
+            }
+            catch (Exception e)
+            {
+                // 잘못된 서버 주소가 HTML 을 돌려줘 JSON 파싱이 실패하는 경우 등. 화면이 잠긴 채 남지 않게 onError 도 부른다.
+                Debug.LogException(e);
+                var wrapped = new ApiException(Shared.ErrorCodes.Internal, "응답을 처리하지 못했습니다. 서버 주소를 확인해 주세요.", 0);
+                if (onError != null) onError(wrapped);
+                else Toast.Show(wrapped.Message);
+            }
+        }
+    }
+}
