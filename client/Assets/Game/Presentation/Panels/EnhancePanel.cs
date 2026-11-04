@@ -1,7 +1,7 @@
 // 강화 창: 장비 선택 → 맞는 주문서·비용 표시 → 서버 판정 결과(성공·실패·파괴) 연출
 using System.Linq;
-using System.Threading.Tasks;
 using Ashveil.Application;
+using Ashveil.Domain;
 using Ashveil.Shared;
 using Ashveil.Shared.Dto;
 using UnityEngine;
@@ -12,15 +12,14 @@ namespace Ashveil.Presentation
     public sealed class EnhancePanel : PanelBase
     {
         private const long GoldCostPerLevel = 100; // 표시용. 실제 비용은 서버 설정이 판정한다.
-        // 결과 뒤 이 시간 동안 버튼을 잠근다. 서버도 이 안에 온 강화를 COOLDOWN 으로 막는다(두 번 누르기).
-        private static readonly int RepeatGuardMs = new EnhanceConfig().RepeatGuardMilliseconds;
 
         private RectTransform _list;
         private Text _detail;
         private Button _enhanceButton;
         private Text _result;
         private long _selectedId;
-        private bool _busy;
+        // 두 번 누르기는 이 잠금만 막는다. 서버는 강화를 시간으로 막지 않는다(D-43).
+        private readonly EnhanceButtonLock _lock = new EnhanceButtonLock();
 
         public static void Open(Transform layer) => OpenSingle<EnhancePanel>(layer, "EnhancePanel", "강화 - 대장장이 오른", new Vector2(1300, 860));
 
@@ -102,36 +101,36 @@ namespace Ashveil.Presentation
                 $"필요 주문서: {scrollName} (보유 {(scroll != null ? scroll.Quantity : 0)}장)\n" +
                 $"강화 비용: {cost:N0} 골드 (보유 {GameContext.Player.Gold:N0})\n" +
                 "<color=#AAB0BB>+3까지는 안전하게 성공합니다. 이후에는 실패하거나 장비가 파괴될 수 있습니다.</color>";
-            _enhanceButton.interactable = !_busy && scroll != null;
+            _enhanceButton.interactable = !_lock.IsLocked && scroll != null;
         }
 
         private void OnEnhance()
         {
             var item = Selected;
-            if (item == null || _busy) return;
+            if (item == null || _lock.IsLocked) return;
             var scroll = ScrollFor(ItemCatalog.Get(item.TemplateId));
             if (scroll == null)
             {
                 Toast.Show("맞는 강화 주문서가 없습니다.");
                 return;
             }
-            _busy = true;
             _enhanceButton.interactable = false;
             _result.text = "...";
             AsyncUi.Run(async () =>
             {
                 try
                 {
-                    var response = await GameContext.Api.EnhanceAsync(item.Id, scroll.Id);
-                    GameContext.Player.Apply(response.Inventory);
-                    // 장착 장비 강화는 스탯이 바뀌므로 캐릭터 정보를 다시 받는다.
-                    if (item.EquippedSlot != null) GameContext.Player.Apply(await GameContext.Api.GetCharacterAsync());
-                    if (this != null) ShowResult(response);
-                    await Task.Delay(RepeatGuardMs);
+                    await _lock.RunAsync(async () =>
+                    {
+                        var response = await GameContext.Api.EnhanceAsync(item.Id, scroll.Id);
+                        GameContext.Player.Apply(response.Inventory);
+                        // 장착 장비 강화는 스탯이 바뀌므로 캐릭터 정보를 다시 받는다.
+                        if (item.EquippedSlot != null) GameContext.Player.Apply(await GameContext.Api.GetCharacterAsync());
+                        if (this != null) ShowResult(response);
+                    });
                 }
                 finally
                 {
-                    _busy = false;
                     if (this != null) RenderDetail();
                 }
             }, e =>
