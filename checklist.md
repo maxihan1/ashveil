@@ -86,3 +86,9 @@
 - [x] 기획서 §7 · `docs/api.md` 강화 문단 새 규칙으로
 - [ ] PR → `worktree-game-dev` 병합 → QA APK 빌드 52 다음 판
 - [ ] 운영 서버 배포 · 폰 설치 · ASH-FN-175 등 11개 · 662 다시 돌리기 (포트폴리오 세션)
+
+## 13단계 API 문서를 실제 응답과 맞추기 (2026-11-04 추가)
+- [x] 엔드포인트마다 실제로 나는 응답 코드(성공 201 · 204, 오류 400 · 401 · 403 · 404 · 409)와 오류 본문 `{ code, message }` 를 OpenAPI 문서에 (D-45)
+- [x] `EquipSlot` 열거값에서 null 빼기 · 강화 `item` · 봇 처치 · 사망 `dropped` · 봇 줍기 `inventory` 를 nullable 로 (D-45)
+- [x] 통합 테스트 `OpenApiContractTests` — 실제 응답을 문서 스키마로 검증 (고치기 전 201 · `equippedSlot` 으로 실패, 고친 뒤 통과)
+- [ ] 운영 서버 배포 · Test Commander 「응답 형식 검사」 다시 돌리기 (포트폴리오 세션 — `~/.claude/plans/ashveil-openapi.md`)
