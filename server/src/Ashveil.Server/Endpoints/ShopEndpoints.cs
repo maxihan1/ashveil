@@ -87,7 +87,7 @@ public static class ShopEndpoints
             Item target = null!;
             await db.InTransactionAsync(async () =>
             {
-                // 강화는 시간으로 막지 않는다. 연달아 온 요청도 캐릭터 행 잠금으로 차례로 다 처리한다(D-43).
+                // 강화는 시간으로 막지 않는다. 연달아 온 요청도 캐릭터 행 잠금으로 차례로 다 처리한다(D-44).
                 character = await db.LockOwnedCharacterAsync(http.CharacterId(), http.AccountId());
                 var items = await db.LoadItemsAsync(OwnerKind.Character, character.Id);
                 target = items.FirstOrDefault(i => i.Id == req.ItemId) ?? throw GameErrors.NotFound("강화할 아이템");

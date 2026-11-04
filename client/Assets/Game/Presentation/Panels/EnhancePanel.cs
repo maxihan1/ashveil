@@ -18,7 +18,7 @@ namespace Ashveil.Presentation
         private Button _enhanceButton;
         private Text _result;
         private long _selectedId;
-        // 두 번 누르기는 이 잠금만 막는다. 서버는 강화를 시간으로 막지 않는다(D-43).
+        // 두 번 누르기는 이 잠금만 막는다. 서버는 강화를 시간으로 막지 않는다(D-44).
         private readonly EnhanceButtonLock _lock = new EnhanceButtonLock();
 
         public static void Open(Transform layer) => OpenSingle<EnhancePanel>(layer, "EnhancePanel", "강화 - 대장장이 오른", new Vector2(1300, 860));

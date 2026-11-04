@@ -74,8 +74,14 @@
 - [x] PR #8 → `worktree-game-dev` 병합 → QA APK 빌드 52(run 41752101088, `0.1.52`) → `~/Apps/ashveil/build52/Ashveil-qa.apk`
 - [ ] 폰 설치 · Test Commander 대상 앱 경로 바꾸기 (다른 세션, Ashveil 정식 실행 끝난 뒤)
 
-## 11단계 강화 두 번 누르기 규칙 (2026-11-04 추가)
-- [x] 서버 강화 0.5초 `COOLDOWN` 막기 · 설정 `Game:Enhance:RepeatGuardMilliseconds` 지움 — 연달아 온 요청 · 동시 요청 둘 다 처리 (서버 테스트) (D-43)
+## 11단계 정리 교착 (ASH-FN-196, 2026-11-04 추가)
+- [x] 원인: `/admin/cleanup` 이 아이템 → 캐릭터(계정 cascade) 차례로 잠가, 캐릭터 → 아이템 차례인 게임 요청과 교착 (재현 실험 · Postgres 교착 로그)
+- [x] 정리가 캐릭터 행부터 id 차례로 `FOR UPDATE` 잠금 (통합 테스트 `Cleanup_ConcurrentWithGameRequestOnSameCharacter_WaitsInsteadOfDeadlocking`, 고치기 전 500 · 고친 뒤 통과) (D-43)
+- [x] `EnableRetryOnFailure` 는 켜지 않는다 (D-43)
+- [ ] 운영 서버 배포 (사용자, Test Commander 정식 실행 끝난 뒤 — `~/.claude/plans/ashveil-cleanup-deadlock.md`)
+
+## 12단계 강화 두 번 누르기 규칙 (2026-11-04 추가)
+- [x] 서버 강화 0.5초 `COOLDOWN` 막기 · 설정 `Game:Enhance:RepeatGuardMilliseconds` 지움 — 연달아 온 요청 · 동시 요청 둘 다 처리 (서버 테스트) (D-44)
 - [x] 강화 창 잠금을 Domain `EnhanceButtonLock` 으로 — 응답 대기 중 · 결과 뒤 0.5초 누름은 요청 안 보냄 (EditMode 테스트)
 - [x] 기획서 §7 · `docs/api.md` 강화 문단 새 규칙으로
 - [ ] PR → `worktree-game-dev` 병합 → QA APK 빌드 52 다음 판

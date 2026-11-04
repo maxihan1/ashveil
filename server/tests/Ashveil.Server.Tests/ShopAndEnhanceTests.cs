@@ -178,7 +178,7 @@ public class ShopAndEnhanceTests(ServerFixture server) : IClassFixture<ServerFix
 
 public class EnhanceRepeatGuardTests(ServerFixture server) : IClassFixture<ServerFixture>
 {
-    // 두 번 누르기는 강화 창 버튼 잠금만 막는다(D-43). 서버는 같은 캐릭터의 강화가 연달아 와도 다 처리한다.
+    // 두 번 누르기는 강화 창 버튼 잠금만 막는다(D-44). 서버는 같은 캐릭터의 강화가 연달아 와도 다 처리한다.
     private async Task<(GameClient Client, long CharacterId, EnhanceRequest Request)> ArmedPlayerAsync()
     {
         var (client, character) = await server.NewPlayerAsync();

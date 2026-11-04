@@ -1,9 +1,12 @@
-// 어드민 API 통합 테스트: 키 인증, 캐릭터 조회·조작·초기화, 결과 고정, 테스트 계정 정리, 서버 관리 스폰 표
+// 어드민 API 통합 테스트: 키 인증, 캐릭터 조회·조작·초기화, 결과 고정, 테스트 계정 정리(게임 요청과 동시에), 서버 관리 스폰 표
 using System.Net;
 using Ashveil.Server.Endpoints;
 using Ashveil.Server.Tests.Infrastructure;
 using Ashveil.Shared;
 using Ashveil.Shared.Dto;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Xunit;
 
 namespace Ashveil.Server.Tests;
@@ -173,6 +176,58 @@ public class AdminTests(ServerFixture server) : IClassFixture<ServerFixture>
         await admin.GetAsync<CharacterDto>($"/admin/characters/{survivor.Id}");
 
         await admin.PostErrorAsync("/admin/cleanup", new AdminCleanupRequest { UsernamePrefix = "u" }, HttpStatusCode.BadRequest, ErrorCodes.ValidationFailed);
+    }
+
+    [Fact]
+    public async Task Cleanup_ConcurrentWithGameRequestOnSameCharacter_WaitsInsteadOfDeadlocking()
+    {
+        // ASH-FN-196: 강화가 아직 도는 계정 여럿을 동시에 정리하다 40P01 로 500 이 났다.
+        var prefix = "qa" + Guid.NewGuid().ToString("N")[..4];
+        var players = new List<(GameClient Client, CharacterDto Character)>();
+        for (var i = 0; i < 3; i++) players.Add(await server.NewPlayerAsync(usernamePrefix: prefix));
+        var busy = players[0].Character;
+
+        // 게임 요청(강화 등)처럼 캐릭터 행부터 잠근다(GameDbContext.LockCharacterAsync 와 같은 SQL).
+        await using var game = await OpenGameDbAsync();
+        await using var tx = await game.BeginTransactionAsync();
+        await ExecAsync(game, $"SELECT id FROM characters WHERE id = {busy.Id} FOR UPDATE");
+
+        var admin = server.NewAdminClient();
+        var cleanups = players.Select(p => admin.PostAsync<AdminCleanupResponse>("/admin/cleanup",
+            new AdminCleanupRequest { UsernamePrefix = p.Client.Username })).ToList();
+        await WaitUntilSomeoneWaitsForLockAsync();
+
+        // 이어서 그 캐릭터의 아이템을 고친다(강화의 주문서 수량 줄이기). 정리가 아이템을 먼저 지웠다면 여기서 교착이 난다.
+        await ExecAsync(game, $"UPDATE items SET quantity = quantity WHERE owner_kind = 'Character' AND owner_id = {busy.Id}");
+        await tx.CommitAsync();
+
+        Assert.All(await Task.WhenAll(cleanups), r => Assert.Equal(1, r.AccountsDeleted));
+    }
+
+    private async Task<NpgsqlConnection> OpenGameDbAsync()
+    {
+        var conn = new NpgsqlConnection(server.Factory.Services.GetRequiredService<IConfiguration>().GetConnectionString("Game"));
+        await conn.OpenAsync();
+        return conn;
+    }
+
+    private static async Task ExecAsync(NpgsqlConnection conn, string sql)
+    {
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task WaitUntilSomeoneWaitsForLockAsync()
+    {
+        await using var conn = await OpenGameDbAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'", conn);
+        for (var i = 0; i < 100; i++)
+        {
+            if ((long)(await cmd.ExecuteScalarAsync())! > 0) return;
+            await Task.Delay(50);
+        }
+        Assert.Fail("정리 요청이 캐릭터 잠금을 기다리지 않았다");
     }
 
     [Fact]
