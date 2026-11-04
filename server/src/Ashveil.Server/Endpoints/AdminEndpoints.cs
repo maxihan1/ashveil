@@ -250,7 +250,11 @@ public static class AdminEndpoints
             await db.InTransactionAsync(async () =>
             {
                 var accountIds = await db.Accounts.Where(a => a.Username.StartsWith(prefix)).Select(a => a.Id).ToListAsync();
-                var characterIds = await db.Characters.Where(c => accountIds.Contains(c.AccountId)).Select(c => c.Id).ToListAsync();
+                // 캐릭터 행부터 id 차례로 잠근다(잠금 순서 캐릭터 → 그 밖, GameDbContext). 게임 요청은 캐릭터를 잠근 뒤 아이템을 고치는데,
+                // 아이템을 먼저 지우고 캐릭터는 끝에 계정 cascade 로 잠그면 서로 상대 행을 기다려 40P01 이 난다. 지운 캐릭터도 잠근다.
+                var characterIds = await db.Characters
+                    .FromSql($"SELECT * FROM characters WHERE account_id = ANY({accountIds}) ORDER BY id FOR UPDATE")
+                    .Select(c => c.Id).ToListAsync();
                 // 아이템·쿨다운·이력은 캐릭터 외래 키가 없어서 먼저 지운다. 원장·리프레시 토큰은 계정 삭제로 함께 지워진다.
                 await db.Items.Where(i => i.OwnerKind == OwnerKind.Character && characterIds.Contains(i.OwnerId)).ExecuteDeleteAsync();
                 await db.SpawnCooldowns.Where(s => characterIds.Contains(s.CharacterId)).ExecuteDeleteAsync();

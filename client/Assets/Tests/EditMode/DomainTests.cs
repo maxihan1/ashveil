@@ -1,6 +1,9 @@
-// 클라이언트 Domain(몬스터 AI·봇 의사결정·자동사냥·전투 공식·에러 문구) EditMode 테스트
+// 클라이언트 Domain(몬스터 AI·봇 의사결정·자동사냥·전투 공식·에러 문구·강화 버튼 잠금) EditMode 테스트
+using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Ashveil.Domain;
 using Ashveil.Shared;
 using NUnit.Framework;
@@ -233,6 +236,59 @@ namespace Ashveil.Tests
             var codes = typeof(ErrorCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(f => f.IsLiteral).Select(f => (string)f.GetRawConstantValue());
             foreach (var code in codes) Assert.IsTrue(ErrorMessages.IsKnown(code), "안내 문구 없음: " + code);
+        }
+    }
+
+    public class EnhanceButtonLockTests
+    {
+        private SynchronizationContext _context;
+
+        // 테스트 스레드에서 await 연속 작업을 바로 돌리도록 Unity 동기화 컨텍스트를 잠시 뺀다(ApplicationTests 와 같다).
+        [SetUp]
+        public void SetUp()
+        {
+            _context = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(null);
+        }
+
+        [TearDown]
+        public void TearDown() => SynchronizationContext.SetSynchronizationContext(_context);
+
+        [Test]
+        public void PressWhileWaitingOrRightAfterResult_SendsNothing()
+        {
+            // 기획서 §7: 응답을 기다리는 동안, 결과가 뜬 뒤 0.5초 안에 다시 누르면 요청을 보내지 않는다.
+            var gate = new EnhanceButtonLock();
+            var server = new TaskCompletionSource<bool>();
+            var requests = 0;
+            Func<Task> press = () => { requests++; return Task.CompletedTask; };
+
+            var first = gate.RunAsync(async () => { requests++; await server.Task; });
+            Assert.IsTrue(gate.IsLocked, "응답을 기다리는 동안 잠긴다");
+            Assert.IsFalse(gate.RunAsync(press).Result, "응답 대기 중 누름");
+
+            var shown = System.Diagnostics.Stopwatch.StartNew();
+            server.SetResult(true); // 결과가 화면에 떴다
+            Thread.Sleep(250);
+            Assert.IsFalse(gate.RunAsync(press).Result, "결과 뒤 0.5초 안 누름");
+
+            Assert.IsTrue(first.Result);
+            Assert.GreaterOrEqual(shown.ElapsedMilliseconds, EnhanceButtonLock.HoldMilliseconds - 50);
+            Assert.IsFalse(gate.IsLocked, "0.5초가 지나면 풀린다");
+            Assert.AreEqual(1, requests, "요청은 첫 누름 하나뿐");
+
+            Assert.IsTrue(gate.RunAsync(press).Result, "풀린 뒤 누르면 다시 강화한다");
+            Assert.AreEqual(2, requests);
+        }
+
+        [Test]
+        public void FailedRequest_UnlocksAtOnce()
+        {
+            // 실패하면 보여 줄 결과가 없으니 기다리지 않고 바로 다시 누를 수 있다.
+            var gate = new EnhanceButtonLock();
+            Assert.Throws<InvalidOperationException>(() =>
+                gate.RunAsync(() => throw new InvalidOperationException("network")).GetAwaiter().GetResult());
+            Assert.IsFalse(gate.IsLocked);
         }
     }
 }
