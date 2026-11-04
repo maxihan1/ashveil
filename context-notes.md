@@ -46,3 +46,12 @@
 - 바깥 확인(맥): `https://game.maxihan.com/health` 200 · Let's Encrypt(~2027-01-25) · `/admin` 키 없음 401 · 옛 기본키 401 · 가입 201(accountId 1) · 로그인 토큰. 확인용 계정 `opscheck1345` 가 남아 있다(백오피스 「테스트 계정 정리」로 지워도 된다).
 - QA APK 빌드 47(run 40442106970) — 로그 `[Build] 기본 서버 주소: https://game.maxihan.com` (qa · release). 이제 HTTPS 라 Release 빌드도 이 서버로 시험할 수 있다.
 - QA Hub 쪽에 넘길 것(OPS-F4-07 「대상 서버 주소를 새 도메인으로」): Ashveil 대상 서버 줄 주소 `https://game.maxihan.com` · 어드민 키는 서버 `/opt/ashveil/.env` 의 `ADMIN_KEY`(대화 · 로그에 찍지 않는다) · 새 DB 라 그 줄의 게임 계정은 가입 API 로 다시 만든다. 맥 Ashveil 컨테이너(`ashveil-db-1` · `ashveil-server-1`, 이미 멈춤)는 OPS-F4-08 이 정리한다.
+
+## 2026-11-04
+- Test Commander 케이스 ASH-UI-105(봇 이름표 「이름 Lv.N」)가 봇이 들판을 돌다 가까이 오기를 30초 기다리다 늘 실패했다(10-24 · 11-04 실행). 사용자가 GM 콘솔에 「봇 부르기」를 더해 테스트가 누르게 하는 쪽을 골랐다(「2번이 맞지」).
+- 봇 위치는 서버에 없다. 서버는 이름 · 레벨 · 구역 · 사망만 들고, 자리는 클라이언트가 `BotBrain.SpawnPoint` 로 정하고 배회한다. 그래서 서버 GM API 없이 클라이언트에서 `ActorMotor.Teleport` 로 옮긴다.
+- 대상은 「지금 구역」(`WorldGround.ZoneAt(플레이어)`)의 `LocallyDead` 아닌 봇이다. 멀어서 꺼진 봇(`BotManager.ActiveDistance` 90)도 옮기면서 켠다. 마을에는 봇 구역이 없어 0명이다.
+- 옮긴 뒤 `_wanderTarget` 을 새 자리로 둔다. 안 그러면 다음 배회 타이머(5~9초)까지 옛 배회 지점으로 걸어 돌아간다. 마을 방문 중이던 봇은 그대로 마을로 걷는다(이름표는 바로 뜬다).
+- 버튼은 새 줄이 아니라 순간이동 줄(`GmTeleportSection`) 맨 왼쪽(slot 4)에 둔다. control_cli `click` 은 버튼 가운데를 가짜 터치로 누르는데, GM 목록은 보이는 높이가 736 이라 여섯째 줄(봇 리셋)의 버튼부터 스크롤해야 보인다. 새 줄을 위쪽에 넣으면 다섯째 줄(강화 확률)이 밀려 가려진다. 순간이동 줄 너비는 버튼 5개(16+5×262=1326)가 줄 폭(1436) 안에 든다.
+- 버튼 이름은 사용자가 준 `GmSummonBots` 그대로(`Button` 꼬리 없음). 트리 주소 `/WorldRoot/HudCanvas/PanelLayer/GmConsole/Window/Body/GmList/Content/GmTeleportSection/GmSummonBots` — control_cli `Tree.PathOf` 가 장면 맨 위 오브젝트부터 센다.
+- 로컬 Unity 참조 DLL 캐시(`tools/unity-compile-check/.cache`)가 game-dev 작업 폴더에도 비어 있었다(0B). `.cache` 는 gitignore 에 없어서 저장소 밖에 받았다.

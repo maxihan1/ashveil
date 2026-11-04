@@ -86,7 +86,7 @@ adb push server-config.json /sdcard/Android/data/com.nimbusgames.ashveil.qa/file
 | 캐릭터 선택 | `CharacterSlot0..2` (`NameText`, `SelectButton`, `DeleteButton`, `CreateSlotButton`), `CharacterCreatePanel` (`NameInput`, `ClassWarrior`, `ClassArcher`, `ClassMage`, `GenderMale`, `GenderFemale`, `CreateButton`) |
 | HUD | `GoldText`, `LevelText`, `HpBar`, `MpBar`, `ExpBar`, `AlignmentText`, `ZoneText`, `TargetFrame`, `AttackButton`, `Skill1Button`, `Skill2Button`, `PotionButton`, `AutoHuntButton`, `PkModeButton`, `TownButton`, `InventoryButton`, `CharacterButton`, `GmButton`, `Minimap`, `Joystick` |
 | 월드 | `Player`, `Monster_<스폰ID>_<종류>`, `Bot_<ID>_<이름>`, `Npc_npc_merchant`, `Npc_npc_enhancer`, `Npc_npc_guard_*`, `GroundItem_<ID>` |
-| 창 | `InventoryPanel`, `ItemDetailPopup`(`EquipButton`, `UnequipButton`, `UseButton`), `ShopPanel`(`BuyTab`, `SellTab`, `Buy_<아이템ID>`), `EnhancePanel`(`EnhanceButton`, `ResultText`), `CharacterInfoPanel`, `DeathPanel`(`RespawnButton`), `GmConsole` |
+| 창 | `InventoryPanel`, `ItemDetailPopup`(`EquipButton`, `UnequipButton`, `UseButton`), `ShopPanel`(`BuyTab`, `SellTab`, `Buy_<아이템ID>`), `EnhancePanel`(`EnhanceButton`, `ResultText`), `CharacterInfoPanel`, `DeathPanel`(`RespawnButton`), `GmConsole`(`GmSummonBots` = 봇 부르기, 주소 `/WorldRoot/HudCanvas/PanelLayer/GmConsole/Window/Body/GmList/Content/GmTeleportSection/GmSummonBots`) |
 
 ## 5. 문제 해결
 
