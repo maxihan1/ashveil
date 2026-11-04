@@ -1,4 +1,4 @@
-// QA 빌드 전용 GM 콘솔: 골드·아이템·레벨·순간이동·강화 확률·봇 리셋·성향치·드랍 확률 (서버 GM API 호출)
+// QA 빌드 전용 GM 콘솔: 골드·아이템·레벨·순간이동·봇 부르기·강화 확률·봇 리셋·성향치·드랍 확률 (봇 부르기 말고는 서버 GM API 호출)
 #if QA_BUILD
 using System;
 using System.Collections.Generic;
@@ -69,6 +69,14 @@ namespace Ashveil.Presentation
                     Print($"{ZoneMap.DisplayName(zone)} ({x}, {z})로 이동");
                 }, 250);
             }
+            // 봇 위치는 클라이언트만 들고 있어 서버 API 없이 옮긴다. 스크롤 없이 보이게 이 줄에 둔다.
+            Action(teleport, "GmSummonBots", "봇 부르기", zones.Length, () =>
+            {
+                var player = WorldServices.Player.transform.position;
+                var zone = WorldGround.ZoneAt(player);
+                var count = WorldServices.Bots.SummonAround(player, zone);
+                Print(count > 0 ? $"{ZoneMap.DisplayName(zone)} 봇 {count}명을 불렀습니다." : $"{ZoneMap.DisplayName(zone)}에 살아 있는 봇이 없습니다.");
+            }, 250);
 
             var rate = Section("GmEnhanceRateSection", "강화 확률 덮어쓰기 (목표 수치 · 성공 · 실패 · 파괴)");
             var rateLevel = Field(rate, "GmEnhanceTargetInput", "4", 16, 110);

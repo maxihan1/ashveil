@@ -168,6 +168,24 @@ namespace Ashveil.Tests
                 Assert.AreEqual(zone, ZoneMap.GetZone(p.X, p.Z), $"봇 {id} {zone} {p}");
             }
         }
+
+        [Test]
+        public void SummonPoint_RingsCenterWithinRadius_AndNeverStacks()
+        {
+            var center = new Vec2(250, 250);
+            foreach (var count in new[] { 1, 2, 7, 10 })
+            {
+                var points = Enumerable.Range(0, count).Select(i => BotBrain.SummonPoint(center, i, count)).ToList();
+                foreach (var p in points)
+                {
+                    var d = Vec2.Distance(center, p);
+                    Assert.That(d, Is.InRange(BotBrain.SummonMinRadius - 0.01f, BotBrain.SummonMaxRadius + 0.01f), $"{count}명 {p}");
+                }
+                for (var a = 0; a < count; a++)
+                for (var b = a + 1; b < count; b++)
+                    Assert.Greater(Vec2.Distance(points[a], points[b]), 1f, $"{count}명 {a}·{b} 겹침");
+            }
+        }
     }
 
     public class AutoHuntAndCombatTests

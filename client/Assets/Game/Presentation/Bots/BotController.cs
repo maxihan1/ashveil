@@ -94,6 +94,14 @@ namespace Ashveil.Presentation
             }
         }
 
+        /// <summary>GM 봇 부르기: 그 자리로 옮기고 거기서 다시 배회한다(옛 배회 지점으로 걸어 돌아가지 않게).</summary>
+        public void SummonTo(Vector3 position)
+        {
+            _motor.Teleport(position);
+            _wanderTarget = transform.position;
+            gameObject.SetActive(true);
+        }
+
         public void ApplyAlignment(AlignmentDto alignment)
         {
             if (alignment == null) return;
