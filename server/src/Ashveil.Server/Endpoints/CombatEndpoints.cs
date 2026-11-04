@@ -12,7 +12,7 @@ public static class CombatEndpoints
 {
     public static void MapCombatEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/combat").WithTags("Combat").RequireAuthorization();
+        var group = app.MapGroup("/combat").WithTags("Combat").RequireAuthorization().ProducesErrors(400, 401, 403, 404);
 
         group.MapPost("/monster-kill", async (MonsterKillRequest req, HttpContext http, GameDbContext db,
             RuntimeGameConfig config, IRandomSource random, TimeProvider clock) =>
@@ -52,7 +52,7 @@ public static class CombatEndpoints
             });
             response.Character = await db.CharacterDtoAsync(character, now);
             return response;
-        });
+        }).ProducesErrors(409);
 
         group.MapPost("/bot-kill", async (BotKillRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config,
             IRandomSource random, TimeProvider clock, BotService bots, ForcedOutcomes forced) =>
@@ -129,7 +129,7 @@ public static class CombatEndpoints
             response.Character = await db.CharacterDtoAsync(character, now);
             response.Bot = Map.Bot(bot, botItems, now);
             return response;
-        });
+        }).ProducesErrors(409);
 
         group.MapPost("/pk-attack", async (PkAttackRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config, TimeProvider clock) =>
         {
@@ -166,7 +166,7 @@ public static class CombatEndpoints
                 }
             });
             return response;
-        });
+        }).ProducesErrors(409);
 
         group.MapPost("/player-death", async (PlayerDeathRequest req, HttpContext http, GameDbContext db, RuntimeGameConfig config,
             IRandomSource random, TimeProvider clock, ForcedOutcomes forced) =>

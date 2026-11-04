@@ -1,6 +1,7 @@
 # 백엔드 API 명세 (확정안)
 
 - 기본 주소 `http://<서버 LAN IP>:8080`. 서버가 뜨면 `/swagger` 에서 OpenAPI 문서를 볼 수 있다.
+- OpenAPI 문서(`/openapi/v1.json`)는 엔드포인트마다 실제로 나는 응답 코드(성공 201 · 204 포함)와 아래 에러 형식 본문을 싣는다. 문서와 실제 응답이 맞는지는 서버 테스트 `OpenApiContractTests` 가 본다(D-45).
 - JSON 필드는 camelCase, enum은 문자열(`"Warrior"`).
 - 인증이 필요한 API는 `Authorization: Bearer <accessToken>` 헤더를 쓴다.
 - 경로에 캐릭터 ID가 없는 게임 API(상점, 강화, 전투, 월드, 원장, GM)는 **`X-Character-Id` 헤더**로 대상 캐릭터를 지정한다. 서버는 그 캐릭터가 토큰의 계정 소유인지 확인한다(`FORBIDDEN`).

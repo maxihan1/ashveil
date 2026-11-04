@@ -12,7 +12,7 @@ public static class WorldEndpoints
 {
     public static void MapWorldEndpoints(this IEndpointRouteBuilder app)
     {
-        var world = app.MapGroup("/world").WithTags("World").RequireAuthorization();
+        var world = app.MapGroup("/world").WithTags("World").RequireAuthorization().ProducesErrors(401);
 
         world.MapGet("/spawns", async (GameDbContext db) =>
         {
@@ -30,7 +30,7 @@ public static class WorldEndpoints
             if (zone.HasValue) query = query.Where(g => g.Zone == zone.Value);
             var list = await query.OrderBy(g => g.ItemId).ToListAsync();
             return list.Select(Map.Ground).ToList();
-        });
+        }).ProducesErrors(400);
 
         world.MapPost("/ground-items/{id:long}/pickup", async (long id, PickupRequest req, HttpContext http, GameDbContext db,
             RuntimeGameConfig config, TimeProvider clock) =>
@@ -85,7 +85,7 @@ public static class WorldEndpoints
             response.Item = Map.Item(landed);
             if (response.PickedByKind == EntityKind.Character) response.Inventory = await db.InventoryDtoAsync(character);
             return response;
-        });
+        }).ProducesErrors(400, 403, 404, 409);
 
         app.MapGet("/bots", async (ZoneId? zone, GameDbContext db, BotService bots, TimeProvider clock) =>
         {
@@ -99,6 +99,6 @@ public static class WorldEndpoints
                 .Where(i => i.OwnerKind == OwnerKind.Bot && ids.Contains(i.OwnerId)).ToListAsync();
             var byOwner = items.ToLookup(i => i.OwnerId);
             return list.Select(b => Map.Bot(b, byOwner[b.Id], now)).ToList();
-        }).WithTags("Bots").RequireAuthorization();
+        }).WithTags("Bots").RequireAuthorization().ProducesErrors(400, 401);
     }
 }

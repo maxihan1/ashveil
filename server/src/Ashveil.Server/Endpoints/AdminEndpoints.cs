@@ -31,7 +31,7 @@ public static class AdminEndpoints
             if (!CryptographicOperations.FixedTimeEquals(given, expected))
                 return GameErrors.ToResult(ErrorCodes.Unauthorized, 401, $"{KeyHeader} 헤더가 올바르지 않습니다.");
             return await next(ctx);
-        });
+        }).ProducesErrors(401);
 
         MapQueries(admin);
         MapCharacterChanges(admin);
@@ -64,7 +64,7 @@ public static class AdminEndpoints
                     Id = a.Id, Username = a.Username, CreatedAt = a.CreatedAt,
                     CharacterCount = db.Characters.Count(c => c.AccountId == a.Id && c.DeletedAt == null),
                 }).ToListAsync();
-        });
+        }).ProducesErrors(400);
 
         admin.MapGet("/characters", async (string? name, long? accountId, bool? includeDeleted, int? limit, GameDbContext db) =>
         {
@@ -76,20 +76,20 @@ public static class AdminEndpoints
             if (accountId.HasValue) query = query.Where(x => x.c.AccountId == accountId.Value);
             var list = await query.OrderByDescending(x => x.c.Id).Take(Math.Clamp(limit ?? 50, 1, 500)).ToListAsync();
             return list.Select(x => ToAdmin(x.c, x.Username)).ToList();
-        });
+        }).ProducesErrors(400);
 
         admin.MapGet("/characters/{id:long}", async (long id, GameDbContext db, TimeProvider clock) =>
-            await db.CharacterDtoAsync(await FindCharacterAsync(db, id), clock.GetUtcNow().UtcDateTime));
+            await db.CharacterDtoAsync(await FindCharacterAsync(db, id), clock.GetUtcNow().UtcDateTime)).ProducesErrors(404);
 
         admin.MapGet("/characters/{id:long}/summary", async (long id, GameDbContext db) =>
         {
             var character = await FindCharacterAsync(db, id);
             var username = await db.Accounts.Where(a => a.Id == character.AccountId).Select(a => a.Username).SingleAsync();
             return ToAdmin(character, username);
-        });
+        }).ProducesErrors(404);
 
         admin.MapGet("/characters/{id:long}/inventory", async (long id, GameDbContext db) =>
-            await db.InventoryDtoAsync(await FindCharacterAsync(db, id)));
+            await db.InventoryDtoAsync(await FindCharacterAsync(db, id))).ProducesErrors(404);
 
         admin.MapGet("/characters/{id:long}/ledger", async (long id, int? limit, GameDbContext db) =>
         {
@@ -97,7 +97,7 @@ public static class AdminEndpoints
             var entries = await db.LedgerEntries.AsNoTracking().Where(e => e.CharacterId == id)
                 .OrderByDescending(e => e.Id).Take(Math.Clamp(limit ?? 100, 1, 1000)).ToListAsync();
             return entries.Select(Map.Ledger).ToList();
-        });
+        }).ProducesErrors(400, 404);
 
         admin.MapGet("/characters/{id:long}/enhance-history", async (long id, int? limit, GameDbContext db) =>
         {
@@ -109,7 +109,7 @@ public static class AdminEndpoints
                     Id = h.Id, ItemId = h.ItemId, TemplateId = h.TemplateId, FromLevel = h.FromLevel, ToLevel = h.ToLevel,
                     Result = h.Result, GoldCost = h.GoldCost, CreatedAt = h.CreatedAt,
                 }).ToListAsync();
-        });
+        }).ProducesErrors(400, 404);
 
         admin.MapGet("/pk-records", async (long? characterId, int? limit, GameDbContext db) =>
         {
@@ -123,7 +123,7 @@ public static class AdminEndpoints
                     KillerKind = r.KillerKind, KillerName = r.KillerName, VictimKind = r.VictimKind, VictimName = r.VictimName,
                     VictimWasInnocent = r.VictimWasInnocent, AlignmentDelta = r.AlignmentDelta, CreatedAt = r.CreatedAt,
                 }).ToListAsync();
-        });
+        }).ProducesErrors(400);
     }
 
     private static void MapCharacterChanges(RouteGroupBuilder admin)
@@ -163,7 +163,7 @@ public static class AdminEndpoints
                 }
             });
             return await db.CharacterDtoAsync(character, now);
-        });
+        }).ProducesErrors(400, 404);
 
         admin.MapPost("/characters/{id:long}/items", async (long id, GmItemRequest req, GameDbContext db, RuntimeGameConfig config, TimeProvider clock) =>
         {
@@ -176,7 +176,7 @@ public static class AdminEndpoints
                 await GmEndpoints.GiveItemAsync(db, character, template, req, now);
             });
             return await db.InventoryDtoAsync(character);
-        });
+        }).ProducesErrors(400, 404, 409);
 
         admin.MapDelete("/characters/{id:long}/items/{itemId:long}", async (long id, long itemId, GameDbContext db) =>
         {
@@ -189,7 +189,7 @@ public static class AdminEndpoints
                 db.Items.Remove(item);
             });
             return await db.InventoryDtoAsync(character);
-        });
+        }).ProducesErrors(404);
 
         // 새로 만든 캐릭터 상태(레벨 1, 시작 골드·장비, 성향 0, 마을)로 되돌린다. 원장 기록은 남긴다.
         admin.MapPost("/characters/{id:long}/reset", async (long id, GameDbContext db, TimeProvider clock) =>
@@ -216,7 +216,7 @@ public static class AdminEndpoints
                 db.AddStarterItems(character, now);
             });
             return await db.CharacterDtoAsync(character, now);
-        });
+        }).ProducesErrors(404);
     }
 
     private static void MapTestControls(RouteGroupBuilder admin)
@@ -226,8 +226,8 @@ public static class AdminEndpoints
             Enhance = config.Enhance, Drop = config.Drop, Forced = ToDto(forced),
         });
 
-        admin.MapPut("/config/enhance-rates", (GmEnhanceRateRequest req, RuntimeGameConfig config) => GmEndpoints.ApplyEnhanceRates(req, config));
-        admin.MapPut("/config/drop-rates", (GmDropRateRequest req, RuntimeGameConfig config) => GmEndpoints.ApplyDropRates(req, config));
+        admin.MapPut("/config/enhance-rates", (GmEnhanceRateRequest req, RuntimeGameConfig config) => GmEndpoints.ApplyEnhanceRates(req, config)).ProducesErrors(400);
+        admin.MapPut("/config/drop-rates", (GmDropRateRequest req, RuntimeGameConfig config) => GmEndpoints.ApplyDropRates(req, config)).ProducesErrors(400);
 
         admin.MapGet("/forced", (ForcedOutcomes forced) => ToDto(forced));
         admin.MapPost("/forced", (AdminForceRequest req, ForcedOutcomes forced) =>
@@ -235,7 +235,7 @@ public static class AdminEndpoints
             if (req.Enhance?.Any(r => !Enum.IsDefined(r)) == true) throw GameErrors.Validation("강화 결과 값이 올바르지 않습니다.");
             forced.Enqueue(req.Enhance, req.BotLoot, req.DeathDrop);
             return ToDto(forced);
-        });
+        }).ProducesErrors(400);
         admin.MapDelete("/forced", (ForcedOutcomes forced) =>
         {
             forced.Clear();
@@ -266,7 +266,7 @@ public static class AdminEndpoints
                 response.AccountsDeleted = await db.Accounts.Where(a => accountIds.Contains(a.Id)).ExecuteDeleteAsync();
             });
             return response;
-        });
+        }).ProducesErrors(400);
 
         admin.MapPost("/world/reset", async (AdminWorldResetRequest req, GameDbContext db, BotService bots) =>
         {
@@ -281,7 +281,7 @@ public static class AdminEndpoints
                 response.BotCount = await bots.ResetAsync(req.Zone);
             });
             return response;
-        });
+        }).ProducesErrors(400);
     }
 
     private static void MapSpawns(RouteGroupBuilder admin)
@@ -308,14 +308,14 @@ public static class AdminEndpoints
             spawn.Z = req.Z;
             await db.SaveChangesAsync();
             return SpawnService.ToDto(spawn);
-        });
+        }).ProducesErrors(400);
 
         admin.MapDelete("/spawns/{id}", async (string id, GameDbContext db) =>
         {
             var deleted = await db.MonsterSpawns.Where(s => s.Id == id).ExecuteDeleteAsync();
             if (deleted == 0) throw GameErrors.NotFound("스폰");
             return new AdminCountResponse { Count = await db.MonsterSpawns.CountAsync() };
-        });
+        }).ProducesErrors(404);
 
         admin.MapPost("/spawns/reset", async (GameDbContext db) =>
         {
