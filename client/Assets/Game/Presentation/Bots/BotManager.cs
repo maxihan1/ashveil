@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Ashveil.Application;
+using Ashveil.Domain;
+using Ashveil.Shared;
 using Ashveil.Shared.Dto;
 using UnityEngine;
 
@@ -22,6 +24,18 @@ namespace Ashveil.Presentation
         public BotController Find(long id) => _bots.TryGetValue(id, out var bot) ? bot : null;
 
         public void RefreshSoon() => _pollTimer = 0;
+
+        /// <summary>GM 봇 부르기: zone 의 살아 있는 봇을 center 둘레(반지름 3~6)로 옮기고 옮긴 수를 돌려준다.</summary>
+        public int SummonAround(Vector3 center, ZoneId zone)
+        {
+            var alive = _bots.Values.Where(b => !b.LocallyDead && b.Data.Zone == zone).ToList();
+            for (var i = 0; i < alive.Count; i++)
+            {
+                var p = BotBrain.SummonPoint(new Vec2(center.x, center.z), i, alive.Count);
+                alive[i].SummonTo(new Vector3(p.X, 0, p.Z));
+            }
+            return alive.Count;
+        }
 
         private void Update()
         {

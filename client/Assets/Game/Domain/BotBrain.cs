@@ -1,4 +1,5 @@
 // 봇 의사결정: 성향(평화·반격·선공)과 플레이어 성향에 따른 행동 선택
+using System;
 using Ashveil.Shared;
 
 namespace Ashveil.Domain
@@ -79,6 +80,17 @@ namespace Ashveil.Domain
             }
             var center = ZoneMap.CenterOf(zone);
             return new Vec2(center.X, center.Z);
+        }
+
+        public const float SummonMinRadius = 3f;
+        public const float SummonMaxRadius = 6f;
+
+        /// <summary>GM 봇 부르기: count 명 중 index 번째 봇을 center 둘레(반지름 3~6)에 고르게 둔다.</summary>
+        public static Vec2 SummonPoint(Vec2 center, int index, int count)
+        {
+            var angle = 2 * Math.PI * index / count;
+            var radius = SummonMinRadius + (SummonMaxRadius - SummonMinRadius) * (index % 4) / 3f;
+            return new Vec2(center.X + radius * (float)Math.Cos(angle), center.Z + radius * (float)Math.Sin(angle));
         }
 
         private static uint Hash(long value)
